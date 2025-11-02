@@ -1,0 +1,126 @@
+---
+title: "Chapter13"
+author: "William Vilchez Cruz"
+date: '2025-02-12'
+output: html_document
+---
+
+## Exercise 1
+
+```{r}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        lubridate,
+        ggimage,
+        plotly,
+        ggtext,
+        htmlwidgets
+        )
+
+sakura <- read_xls(
+  path = "data/Chapter13/KyotoFullFlower7.xls",
+  col_names = TRUE) %>%
+  rename(
+    full_flowering_date = "Full-flowering date",
+    full_flowering_date_doy = "Full-flowering date (DOY)",
+    source_code = "Source code",
+    data_type_code = "Data type code",
+    reference_name = "Reference Name"
+  )
+
+#Clean data
+
+sakura <- sakura %>% 
+          dplyr::filter(
+          !is.na(full_flowering_date)) 
+
+colnames(sakura) <- sakura %>% 
+  colnames() %>% 
+  str_to_lower() %>%        
+  str_replace_all("\\.", "_") 
+
+
+sakura <- sakura %>% 
+  select(-full_flowering_date_doy, -data_type_code, 
+         -reference_name, -source_code)
+
+sakura <- sakura %>%
+          rename(
+            year = ad
+          ) %>%
+          mutate(
+            year = as.integer(year)
+          )
+
+# separate “full_flowering_date"
+
+
+date_flower <- as.character(sakura$full_flowering_date) %>% 
+  str_replace_all("(.{1})(.*)", "\\1.\\2") %>% 
+  as_data_frame()
+
+colnames(date_flower)[1] <- "date_fl"
+
+date_flower <- date_flower %>% 
+               separate(date_fl, c("month", "day"), 
+                "\\.")  
+
+# combine date_flower into sakura
+
+sakura <- bind_cols(date_flower, sakura)   
+
+
+sakura <- sakura %>% 
+  mutate(bloom = make_date(year, month, day),
+  day_of_year = as.numeric(
+  format(bloom, "%j"))) %>% # %j: decimal day of the year
+  select(-full_flowering_date)  
+
+
+p <- ggplot(sakura,
+       aes(
+      x = year, y = day_of_year
+       )) + 
+geom_point(color = "#ff0080",
+           alpha = 0.5) +
+geom_smooth(size = 2,color = "#bb894f",
+            fill = "#c8b3a9",span = 0.1) + 
+scale_y_continuous(
+labels = function(x) 
+  format(as.Date(as.character(x), 
+  "%j"), "%B-%d"),
+ name = "") + 
+scale_x_continuous(breaks = c(
+  800,1000,1200,1400,1600,1800,2015
+),
+labels = c(
+  "800","1000","1200","1400","1600","1800","2000-2015"
+), expand = c(0,0),
+name = "Year") +
+coord_cartesian(xlim = c(
+  800,2110), 
+  ylim = c(80,130)) + 
+theme_us_classic()
+
+Sys.setlocale("LC_ALL","English") #US locale
+
+ggplotly(p) %>% 
+  layout(title = list(text = paste0(
+     '<b>Cherry trees have been blossoming earlier due to warmer spring temperature</b>',
+      '<br>',
+      '<sup>',
+      'Date of peak cherry tree (<i>Prunus jamasakura</i>) blossom in Kyoto, Japan','</sup>'),
+     x = 0, xref = "container", 
+     y = 10 , yanchor = "top",
+     pad = list(t = 10, 
+     l = 10, b= 5))) %>%
+  style(hoverinfo = "none", 
+  traces = 2:3) %>%
+  saveWidget("temperature_line.html")
+
+
+```

@@ -1,0 +1,274 @@
+---
+title: "Chapter11"
+author: "William Vilchez Cruz"
+date: '2025-02-12'
+output: html_document
+---
+
+## Exercise 2
+
+```{r}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        ggtext)
+
+fig1 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1e") %>%
+       dplyr::rename(
+         log10 = "log10(rel.ab)"
+       )
+
+fig1$genus <- factor(fig1$genus, 
+  levels = c("g__Phocaeicola","g__Bacteroides",
+              "g__Bifidobacterium","g__Prevotella",
+            "g__Cryptobacteroides", "g__Oribacterium",
+            "g__Treponema_D"))
+
+label_genus <- c("<br>*Phocaeicola*<br>", "<br>*Bacteroides*<br>",
+              "<br>*Bifidobacterium*<br>", "<br>*Prevotella*<br>" ,
+              "<br>*Cryptobacteroides*<br>", "<br>*Oribacterium*<br>",
+                "<br>*Treponema_D*<br>")
+
+names(label_genus) <- c("g__Phocaeicola","g__Bacteroides",
+                        "g__Bifidobacterium","g__Prevotella",
+                      "g__Cryptobacteroides", "g__Oribacterium",
+                     "g__Treponema_D")
+
+p1 <- ggplot(fig1,aes(x = Site, y = log10)) + 
+  geom_boxplot(aes(fill = Site),
+               outlier.color = "gray50",
+               color = "gray20") + 
+  scale_x_discrete(limits = c(
+    "Nanoro", "Navrongo", "Dimamo", "Agincourt",
+    "Soweto", "Nairobi"
+  ), breaks = c(
+    "Nanoro", "Navrongo","Dimamo","Agincourt",
+    "Soweto", "Nairobi"
+  ), 
+  labels = c(
+    "Nanoro", "Navrongo","DIMAMO","Agincourt",
+    "Soweto", "Nairobi"
+  )) + 
+  scale_fill_manual(values = c(
+  "Nanoro" = "#BE9856", "Navrongo" = "#99ADD0" ,
+  "Dimamo" = "#DBBF5A", "Agincourt" = "#889A4D",
+  "Soweto" = "#82354E", "Nairobi" = "#4A4C59"
+  )) + 
+  coord_flip() +
+  facet_grid(~genus,
+        labeller = labeller(genus = label_genus)) + 
+  labs(x = "", y = "log10 (relative abundance)") + 
+  theme_us + 
+  theme(legend.position = "none",
+        plot.margin = margin(t = 5, r = 4, 
+                             b = 1, l = 2),
+      axis.ticks.y = element_blank(),
+      axis.title.x = element_text(hjust = 0),
+      strip.text = element_markdown(size = 14,
+                  hjust = 0),
+      panel.spacing.x =  unit(0.2, "cm"),
+      strip.background  = element_blank(),
+      panel.border = element_rect(
+        colour = "grey85", fill = NA, linetype = 1,
+        size = 1.))
+
+fig2 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1a") %>%
+        dplyr::rename(
+          samples = "Number of samples"
+        )
+
+fig2$Site <- factor(fig2$Site, 
+  levels = c(
+    "Agincourt", "Nanoro", "Nairobi",
+    "Navrongo", "Soweto", "Dimamo"
+  ))
+
+p2 <- ggplot(fig2, aes(
+      x = Site, y = samples)) +
+geom_col(aes(fill = Site),
+         width = 0.8) + 
+scale_y_continuous(expand = c(0,0),
+                   breaks = c(0,200,400),
+                   name = "No. of samples") + 
+scale_fill_manual(values = c(
+  "#889A4D", "#BE9856", "#4A4C59", "#99ADD0",
+  "#82354E", "#DBBF5A"),
+  breaks = c(
+    "Agincourt", "Nanoro", "Nairobi",
+    "Navrongo", "Soweto", "Dimamo"
+  ), 
+  labels = c(
+   "Agincourt", "Nanoro", "Nairobi",
+    "Navrongo", "Soweto", "DIMAMO"
+  )) + 
+theme_us + 
+theme(axis.title.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_blank(),
+      legend.justification = c(0.5,1),
+      legend.position = c(0.85,1))
+
+
+fig3 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1b")
+
+
+sca_fg1 <- ggplot(fig3, aes(
+  x = PCo1 , y = PCo2
+)) + 
+geom_point(aes(fill = Site,
+               color = Site),
+           shape = 21, size = 2.5) + 
+scale_fill_manual( values = c(
+  "#BE9856" , "#99ADD0", "#DBBF5A",
+  "#889A4D", "#82354E", "#4A4C59"
+  )
+) +  
+scale_color_manual( values = c(
+  "#BE985680" , "#99ADD0", "#DBBF5A",
+  "#889A4D", "#82354E", "#4A4C59"
+  )
+) +
+labs(x = "PCo1 (9.77%)", y = "PCo2 (8.22%)") + 
+theme_us + 
+theme(legend.position = "none",
+      panel.border = element_rect(
+        colour = "grey20", fill = NA, 
+        linetype = 1,
+        size = 1.)) 
+
+fig3$Site <- factor(fig3$Site, 
+  levels = c(
+    "Nanoro", "Navrongo","Dimamo",
+    "Agincourt","Soweto", "Nairobi"
+  ))
+
+boxr <- ggplot(fig3, aes(x = Site, 
+                 y = PCo2)) + 
+geom_boxplot(aes(fill = Site),
+             outlier.color = "gray50") +
+scale_fill_manual(values = c(
+  "#BE9856", "#99ADD0",  "#DBBF5A",
+  "#889A4D", "#82354E", "#4A4C59"
+)) + 
+labs(y = "", x = "Sites") +
+theme_minimal() + 
+theme(legend.position = "none",
+      panel.border = element_rect(
+        colour = "grey20", fill = NA, 
+        linetype = 1,
+        size = 1.),
+      axis.title.y = element_blank(),
+      axis.title.x = element_text(hjust = 0,
+          size = 14),
+      axis.ticks = element_blank(),
+      axis.text = element_blank(),
+      panel.grid = element_blank())
+
+boxt <- ggplot(fig3, aes(x = Site, 
+                 y = PCo1)) + 
+geom_boxplot(aes(fill = Site),
+             outlier.color = "gray50") +
+scale_fill_manual(values = c(
+  "#BE9856", "#99ADD0",  "#DBBF5A",
+  "#889A4D", "#82354E", "#4A4C59"
+)) + 
+labs(y = "", x = "Sites") + 
+coord_flip() +
+theme_minimal() + 
+theme(legend.position = "none",
+      panel.border = element_rect(
+        colour = "grey20", fill = NA, 
+        linetype = 1,
+        size = 1.),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(hjust = 0,
+                    size = 14),
+      axis.ticks = element_blank(),
+      axis.text = element_blank(),
+      panel.grid = element_blank())
+
+
+
+xbox <- cowplot::axis_canvas(
+       sca_fg1, axis = "x") + 
+       geom_boxplot(data = fig3,
+        aes(x = PCo1, 
+            fill = Site),size = 0.2) +
+  scale_fill_manual(values = c(
+  "#BE9856", "#99ADD0",  "#DBBF5A",
+  "#889A4D", "#82354E", "#4A4C59"
+)) + theme(panel.border = element_rect(
+        colour = "grey20", fill = NA, 
+        linetype = 1,
+        size = 1.))
+ybox <- cowplot::axis_canvas(
+       sca_fg1, axis = "y",coord_flip = TRUE) + 
+       geom_boxplot(data = fig3,
+        aes(x = PCo2, 
+            fill = Site),size = 0.2) + 
+  coord_flip() +
+  scale_fill_manual(values = c(
+  "#BE9856", "#99ADD0",  "#DBBF5A",
+  "#889A4D", "#82354E", "#4A4C59"
+)) + theme(panel.border = element_rect(
+        colour = "grey20", fill = NA, 
+        linetype = 1,
+        size = 1.))
+
+
+s1 <- cowplot::insert_xaxis_grob(sca_fg1, xbox, 
+      grid::unit(0.2, "null"), position = "top")
+
+s2 <- cowplot::insert_yaxis_grob(s1, ybox, 
+      grid::unit(0.2, "null"), 
+      position = "right")
+
+sct <- cowplot::ggdraw(s2)
+
+
+first_row <- cowplot::plot_grid(p2, sct,
+                   ncol = 2,nrow = 1,
+                   labels = "auto")
+
+cowplot::plot_grid(first_row, p1,
+                   ncol = 1,
+                   labels = c("","c"))
+
+ggsave("facet.png",
+width = 34,
+height = 25, units = c("cm"))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

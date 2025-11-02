@@ -1,0 +1,968 @@
+
+# (PART\*) Part II: Let's visualize our data {-} 
+
+# Plots with a continuous X variable {#continuous-x}
+
+This chapter focuses on visualizations of data distributions for a specific variable. Various graphs commonly used in biology are explored, such as area plots, histograms, density, age pyramids, and quantile-quantile. The chapter focuses on discussing the advantages and disadvantages of each of these graphs, as well as providing the code necessary to generate them. Use is also made of the basic functions of the Dplyr and Tidyr packages, mentioned throughout the Chapter \@ref(tidyverse).
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,include=FALSE}
+
+# This topic will be used throughout the book.
+# In Chapter 12 we discuss the various topics in ggplot2.
+
+theme_us_classic <- function(base_size  = 14, 
+                     base_family  = "") {
+  color = "grey50"
+  line_size = 0.5
+  ggplot2::theme_classic(base_size = base_size, 
+    base_family = base_family) %+replace%
+    theme(
+    axis.text = element_text( color = color), 
+    axis.line = element_line(size = line_size
+    , color = color),
+    axis.ticks = element_line(color = color)
+    )
+}
+```
+
+
+## Area chart
+
+An area chart is similar to a line chart, but using color to fill in between the X-axis and the line. This visualization provides greater visual weight because it further emphasizes the overall trend in the data. \index{Area chart}
+
+(ref:production) Graphs of plastics production between 1950 and 1990. (A) Area chart and (B) line chart. Area charts are line charts but with fill area below the line. 
+
+```{r production, fig.width = 5.5*6/3.2, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:production)', fig.align='center'}
+library(tidyverse)
+library(aplot)
+
+plastic_global <- read.csv(
+              file = "data/Chapter04/plastics_production.csv", 
+              header = TRUE,  sep=",")
+
+g <- ggplot(plastic_global, aes(x = year, y = production))
+
+p1 = g + geom_area(fill = "#0072B290", alpha = 0.3,
+      color = "#0072B2", size = 1) + 
+    labs(y = "Global plastics production (in Mt)", x= NULL) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0, 100000000,200000000, 300000000,
+               400000000),
+    labels = c("0Mt", "100Mt", "200Mt","300Mt","400Mt")) + 
+    scale_x_continuous(expand = c(0,0),breaks = c(1950,1960,1970,
+    1980,1990,2000,2010,2019), labels = c("1950", "1960",
+    "1970", "1980", "1990", "2000", "2010", "2019")) +
+    coord_cartesian(xlim = c(1950,2021)) +
+    theme_us_classic()
+
+p2 = g + geom_line (color = "#0072B2", size= 1 ) + 
+    labs(y = "Global plastics production (in Mt)", x= NULL) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0, 100000000,200000000, 300000000,
+               400000000),
+    labels = c("0Mt", "100Mt", "200Mt","300Mt","400Mt")) + 
+    scale_x_continuous(expand = c(0,0),breaks = c(1950,1960,1970,
+    1980,1990,2000,2010,2019), labels = c("1950", "1960",
+    "1970", "1980", "1990", "2000", "2010", "2019")) +
+    coord_cartesian(xlim = c(1950,2021)) +
+    theme_us_classic()
+
+aplot::plot_list(p1,p2,ncol = 2,tag_levels = c("A","B"))
+
+```
+
+We will perform an example, and use a database on the annual production of plastics between 1950 and 2019 worldwide. This database was based on the work of [@geyer15] and by the [OECD](https://www.oecd.org/). 
+
+```{r}
+
+library(tidyverse)
+
+plastic_global <- read.csv(
+              file = "data/Chapter04/plastics_production.csv", 
+              header = TRUE,  sep=",")
+g <- ggplot(plastic_global, aes(x = year, y = production)) 
+
+head(plastic_global, 4)
+
+```
+
+Figure \@ref(fig:production) shows an area graph on the left side and a line plot on the right side. \index{Line plot} Both show that since 2000 plastic production has increased considerably worldwide. \index{plastic production}
+
+To create our area chart, we use the `geom_area()` function. In this function, we indicate the color, fill and transparency using the `alpha` , `color`, `fill` functions. In addition, we modify the labels of the axes and it can be done with the function `labs(y = “”, x = NULL)`, but for the x-axis the label was removed as it is unnecessary. \index{geom\_area function}
+
+To make our line graph, we replace the function `geom_area()` by the function `geom_line()`. This way we observe that both graphs show us the same results. \index{geom\_line function} 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, eval=FALSE}
+
+g + geom_area(fill = "#0072B290", alpha = 0.3,
+      color = "#0072B2", size = 1) + 
+    labs(y = "Global plastics production (in Mt)", x= NULL) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0, 100000000,200000000, 300000000,
+               400000000),
+    labels = c("0Mt", "100Mt", "200Mt","300Mt","400Mt")) + 
+    scale_x_continuous(expand = c(0,0),breaks = c(1950,1960,1970,
+    1980,1990,2000,2010,2019), labels = c("1950", "1960",
+    "1970", "1980", "1990", "2000", "2010", "2019")) +
+    coord_cartesian(xlim = c(1950,2021)) +
+    theme_us_classic()
+
+g + geom_line (color = "#0072B2", size= 1 ) + 
+    labs(y = "Global plastics production (in Mt)", x= NULL) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0, 100000000,200000000, 300000000,
+               400000000),
+    labels = c("0Mt", "100Mt", "200Mt","300Mt","400Mt")) + 
+    scale_x_continuous(expand = c(0,0),breaks = c(1950,1960,1970,
+    1980,1990,2000,2010,2019), labels = c("1950", "1960",
+    "1970", "1980", "1990", "2000", "2010", "2019")) +
+    coord_cartesian(xlim = c(1950,2021)) +
+    theme_us_classic()
+
+```
+
+The above plot presents a single distribution of our data. However, a **stacked area** plot allows us to visualize several data series simultaneously, in addition to showing parts of the whole (similar to a pie chart). \index{Area chart!stacked}
+
+(ref:industrial) Global primary plastic production by industrial sector, 1990 to 2019. The stacked area chart allows to display several data series at the same time and to show parts of the whole. 
+
+```{r industrial, fig.width = 5.5*6/4.2, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:industrial)', fig.align='center'}
+
+library(tidyverse)
+
+plastic_sector <- read.csv(
+            file = "data/Chapter04/plastic_sector.csv", 
+            header = TRUE,  sep=",")
+
+order_sector <- c("Road.marking", "Marine.coatings",
+                "Personal.care.products", "Industrial.machinery",
+                "Electronics", "Textile.sector", 
+                "Consumer.and.institutional.products",
+                "Transportation", "Other", "Building.and.construction",
+                "Packaging")
+
+plastic_s <- plastic_sector %>%
+         dplyr::select(-Entity,-Code) %>%
+         pivot_longer(!Year, 
+         names_to = "sector",
+          values_to = "count") %>%
+         mutate(
+         sector = as.factor(sector),
+         sector = fct_relevel(sector,order_sector)
+         )
+
+sector_label <- tribble(~label,~Year, ~count, ~sector,
+"Road marking", 2019.2,569999998,"Road.marking",
+"Marine coatings", 2019.2,551499998,"Marine.coatings",
+"Personal care\nproducts", 2019.2,518999998,"Personal.care.products",
+"Industrial\nmachinery",2019.2,479999998,"Industrial.machinery",
+"Electronics",2019.2,449999998,"Electronics",
+"Textile sector",2019.2,423599998,"Textile.sector",
+"Consumer and\ninstitutional\nproducts",2019.2,372799998,"Consumer.and.institutional.products",
+"Transportation",2019.2,318799998,"Transportation",
+"Other",2019.2,248488998,"Other",
+"Building and\nconstruction", 2019.2,178488998,"Building.and.construction",
+"Packaging",2019.2,66315004,"Packaging") 
+
+# plastic_s %>% filter(Year == 2019)
+
+p <- ggplot(plastic_s, aes(x = Year, y = count,
+            color = sector, fill = sector))
+
+p + geom_area() + 
+    labs(y = 
+    "Plastic production by industrial sector", x= NULL) + 
+    scale_y_continuous(
+    breaks = c(0, 100000000,200000000, 300000000,
+               400000000,500000000,600000000),
+    labels = c("0Mt", "100Mt", "200Mt","300Mt",
+      "400Mt","500Mt","600Mt")) + 
+    scale_x_continuous(expand = c(0,0),breaks = c(1990,1995,2000,
+    2005,2010,2015,2019), labels = c("1990", "1995",
+     "2000","2005","2010", "2015" ,"2019")) +
+    geom_text(data = sector_label,
+      mapping = aes(x = Year, 
+      y = count,color = sector,
+      label = label), show.legend = FALSE, size = 8, 
+    size.unit = "pt",hjust = 0, lineheight = 0.7) + 
+   annotate(geom = "segment",
+    x = c(2019, 2019.2,2019.2), xend = c(2019, 2019,2019),
+    y = c(467899998, 467899998,567899998), 
+    yend = c(568899998, 467899998,567899998),
+    color = "gray50") +
+    annotate(
+    geom = "curve", x = 2019, y = 518999998, 
+    xend = 2018.2, yend = 452999998, curvature = 0.1, 
+    arrow = arrow(length = unit(2, "mm")),
+    color = "gray50"
+    ) +
+    coord_cartesian(xlim = c(1990,2022.7), ylim = c(0,600000000),
+    clip = "off", expand = FALSE) +
+    scale_fill_manual(values = c(
+      "#0072B290","#D55E0090","#CC79A790","#e6ab0290","#7570b390",
+      "#1b9e7790","#a6562890", "#da605190","gray40" ,"#99ADD090",
+      "#BE985690"
+    )) +
+    scale_fill_manual(values = c(
+      "#0072B290","#D55E0090","#CC79A790","#e6ab0290","#7570b390",
+      "#1b9e7790","#a6562890", "#da605190","gray40" ,"#99ADD090",
+      "#BE985690"
+    )) + 
+    scale_color_manual(values = c(
+      "#0072B2","#D55E00","#CC79A7","#e6ab02","#7570b3",
+      "#1b9e77","#a65628", "#da6051","gray20" ,"#99ADD0",
+      "#BE9856"
+    )) + 
+    theme_us_classic() + 
+    theme(panel.grid.major.y = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "none")
+```
+
+As an example, we will use another dataset reflecting plastics production by industry sector from 1990 to 2019 (Figure \@ref(fig:industrial)), according to OECD data (2022) processed by Our World in Data (https://ourworldindata.org/plastic-pollution). 
+\index{Our World in Data}
+
+```{r}
+
+plastic_sector <- read.csv(
+            file = "data/Chapter04/plastic_sector.csv", 
+            header = TRUE,  sep=",")
+
+order_sector <- c("Road.marking", "Marine.coatings",
+                "Personal.care.products", "Industrial.machinery",
+                "Electronics", "Textile.sector", 
+                "Consumer.and.institutional.products",
+                "Transportation", "Other", "Building.and.construction",
+                "Packaging")
+
+plastic_s <- plastic_sector %>%
+         dplyr::select(-Entity,-Code) %>%
+         pivot_longer(!Year, 
+         names_to = "sector",
+          values_to = "count") %>%
+         mutate(
+         sector = as.factor(sector),
+         sector = fct_relevel(sector,order_sector)
+         )
+
+p <- ggplot(plastic_s, aes(x = Year, y = count,
+            color = sector, fill = sector))
+  
+head(plastic_s, 4)
+
+```
+
+Before creating the graph, we organize the data appropriately. The objective is to show plastic production by industrial sector in descending order, so the sector variable must become a factor.
+
+In addition, instead of using a separate legend, we chose to directly label the graph to improve its readability, a very useful strategy. This technique consists of generating a small data table containing the labels we wish to visualize. Subsequently, with the geom_text() function, these labels are incorporated into the graph. \index{geom\_text function}
+
+We also use the `annotate()` function to generate lines and arrows. In Section \@ref(annotation-line) we describe in more detail about this function and others. \index{annotate function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+sector_label <- tribble(~label,~Year, ~count, ~sector,
+  "Road marking", 2019.2,569999998,"Road.marking",
+  "Marine coatings", 2019.2,551499998,"Marine.coatings",
+  "Personal care\nproducts", 2019.2,518999998,"Personal.care.products",
+  "Industrial\nmachinery",2019.2,479999998,"Industrial.machinery",
+  "Electronics",2019.2,449999998,"Electronics",
+  "Textile sector",2019.2,423599998,"Textile.sector",
+  "Consumer and\ninstitutional\nproducts",2019.2,372799998,"Consumer.and.institutional.products",
+  "Transportation",2019.2,318799998,"Transportation",
+  "Other",2019.2,248488998,"Other",
+  "Building and\nconstruction", 2019.2,178488998,"Building.and.construction",
+  "Packaging",2019.2,66315004,"Packaging") 
+
+p + geom_area() + 
+    labs(y = 
+    "Plastic production by industrial sector", x= NULL) + 
+    scale_y_continuous(
+    breaks = c(0, 100000000,200000000, 300000000,
+               400000000,500000000,600000000),
+    labels = c("0Mt", "100Mt", "200Mt","300Mt",
+      "400Mt","500Mt","600Mt")) + 
+    scale_x_continuous(expand = c(0,0),breaks = c(1990,1995,2000,
+    2005,2010,2015,2019), labels = c("1990", "1995",
+     "2000","2005","2010", "2015" ,"2019")) +
+    geom_text(data = sector_label,
+      mapping = aes(x = Year, 
+      y = count,color = sector,
+      label = label), show.legend = FALSE, size = 8, 
+    size.unit = "pt",hjust = 0, lineheight = 0.7) + 
+   annotate(geom = "segment",
+    x = c(2019, 2019.2,2019.2), xend = c(2019, 2019,2019),
+    y = c(467899998, 467899998,567899998), 
+    yend = c(568899998, 467899998,567899998),
+    color = "gray50") +
+    annotate(
+    geom = "curve", x = 2019, y = 518999998, 
+    xend = 2018.2, yend = 452999998, curvature = 0.1, 
+    arrow = arrow(length = unit(2, "mm")),
+    color = "gray50"
+    ) +
+    coord_cartesian(xlim = c(1990,2022.7), ylim = c(0,600000000),
+    clip = "off", expand = FALSE) +
+    scale_fill_manual(values = c(
+      "#0072B290","#D55E0090","#CC79A790","#e6ab0290","#7570b390",
+      "#1b9e7790","#a6562890", "#da605190","gray40" ,"#99ADD090",
+      "#BE985690"
+    )) +
+    scale_fill_manual(values = c(
+      "#0072B290","#D55E0090","#CC79A790","#e6ab0290","#7570b390",
+      "#1b9e7790","#a6562890", "#da605190","gray40" ,"#99ADD090",
+      "#BE985690"
+    )) + 
+    scale_color_manual(values = c(
+      "#0072B2","#D55E00","#CC79A7","#e6ab02","#7570b3",
+      "#1b9e77","#a65628", "#da6051","gray20" ,"#99ADD0",
+      "#BE9856"
+    )) + 
+    theme_us_classic() + 
+    theme(panel.grid.major.y = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "none")
+
+```
+
+Stacked area plots have two main disadvantages. The first is the misleading perception of the width of the areas of the different components. The second is that the order in which the data series are presented can influence how we perceive the proportions of the total.
+
+```{block2, area, type='rmdtip'}
+__Want to know more?__
+
+- For a line chart, the `color()` argument is used to color the points.
+- EThe fill can be modified by adding transparency, using the `alpha` argument, and the outline can be thickened by adding the `size` argument. 
+- You can change the X-Y axis labels using the `scale_x_continuous(“”)` and `scale_y_continuous(“”)` functions.
+- If you want to have a color palette at hand, type __“color picker”__ in the Google search engine and you will get a chart with color palettes and color codes.
+
+```
+
+## Histogram chart
+
+The histogram is one of the most common graphs to represent the distribution of quantitative data. In this graph, the continuous variable is divided into segments or bins, which are represented by bars. The height of each bar indicates the number of observations in each bin. In addition, histograms allow us to identify whether the data follow a normal distribution, whether they are skewed, and whether outliers are present. \index{Histogram chart}
+
+(ref:salmon) Body mass of 228 female sockeye salmon. The same body mass distribution is shown for females with three different bin widths: (A) 0.1Kg; (B) 0.3Kg; (C) 0.5Kg.
+
+```{r salmon, fig.width = 5.5*6/4.2, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:salmon)', fig.align='center'}
+library(tidyverse)
+library(aplot)
+salmon_body <- read.csv(file = "data/Chapter04/salmon_body.csv", 
+              header = TRUE,  sep=",")
+
+s <- ggplot(salmon_body, aes(x = massKg))
+
+p1 = s + geom_histogram(binwidth=0.1, fill = "#0072B290",
+    color = "#0072B2", size = 1,boundary = 0, closed = "left") + 
+    labs(y ="Frecuency", x= "Body mass (Kg)") +
+    scale_y_continuous(expand = c(0, 0),
+    limits = c(0,30)) + 
+    scale_x_continuous(expand = c(0,0),
+    limits = c(1,3.5)) +
+    theme_us_classic()
+
+p2 = s + geom_histogram(binwidth=0.3, fill = "#0072B290",
+    color = "#0072B2", size = 1,boundary = 0, closed = "left") + 
+    labs(y ="Frecuency", x= "Body mass (Kg)") +
+    scale_y_continuous(expand = c(0, 0),
+    limits = c(0,80)) + 
+    scale_x_continuous(expand = c(0,0),
+    limits = c(1,3.5)) +
+    theme_us_classic()
+
+p3 = s + geom_histogram(binwidth=0.5, fill = "#0072B290",
+    color = "#0072B2", size = 1,
+    boundary = 0, closed = "left") + 
+    labs(y ="Frecuency", x= "Body mass (Kg)") +
+    scale_y_continuous(expand = c(0,0),
+    limits = c(0,140),
+    breaks = c(0,20,40,60,80,100,120,140)) + 
+    scale_x_continuous(expand = c(0,0),
+    limits = c(1,3.5)) +
+    theme_us_classic()
+
+aplot::plot_list(p1,p2,p3,
+        ncol = 3, tag_levels = "A")
+
+
+```
+
+It is essential to remember that the appearance of a histogram varies according to the width of the bins, so it is crucial to choose them carefully. An effective strategy is to try different widths until you find the one that faithfully represents the data. 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+salmon_body <- read.csv(file = "data/Chapter04/salmon_body.csv", 
+              header = TRUE,  sep=",")
+
+s <- ggplot(salmon_body, aes(x = massKg))
+
+# binwidth=0.1
+s + geom_histogram(binwidth=0.1, fill = "#0072B290",
+    color = "#0072B2", size = 1,boundary = 0, closed = "left") + 
+    labs(y ="Frecuency", x= "Body mass (Kg)") +
+    scale_y_continuous(expand = c(0, 0),
+    limits = c(0,30)) + 
+    scale_x_continuous(expand = c(0,0),
+    limits = c(1,3.5)) +
+    theme_us_classic()
+# binwidth=0.3
+s + geom_histogram(binwidth=0.3, fill = "#0072B290",
+    color = "#0072B2", size = 1,boundary = 0, closed = "left") + 
+    labs(y ="Frecuency", x= "Body mass (Kg)") +
+    scale_y_continuous(expand = c(0, 0),
+    limits = c(0,80)) + 
+    scale_x_continuous(expand = c(0,0),
+    limits = c(1,3.5)) +
+    theme_us_classic()
+# binwidth=0.5
+s + geom_histogram(binwidth=0.5, fill = "#0072B290",
+    color = "#0072B2", size = 1,
+    boundary = 0, closed = "left") + 
+    labs(y ="Frecuency", x= "Body mass (Kg)") +
+    scale_y_continuous(expand = c(0,0),
+    limits = c(0,140),
+    breaks = c(0,20,40,60,80,100,120,140)) + 
+    scale_x_continuous(expand = c(0,0),
+    limits = c(1,3.5)) +
+    theme_us_classic()
+
+```
+
+Figure \@ref(fig:salmon) shows three different histograms representing the body mass of 228 female sockeye salmon (*Oncorhynchus nerka*) from Pick Creek, Alaska [@article19].  (A) The histogram presents bins with narrow width `(binwidth=0.1)`, resulting in an irregular distribution and with a possible existence of two or more peaks. (C) On the other hand, if the bins are too wide `(binwidth=0.5)`, they may hide important details of the data distribution. (B) On the other hand, a moderate width bin allows us to distinguish two different body size groups (weight between 1.5 kg and 2 kg), being the most appropriate option for our data.
+
+```{block2, hist, type='rmdtip'}
+__Want to know more?__
+
+- Note that histograms are not the same as bar charts. While histograms represent continuous data, bar charts are used for categorical data.
+
+- Another way to adjust the bin width is to select the number of _bins_ (for example, bins = 30); the greater the number of bins, the smaller the width [@Nuzzo2019].
+
+- You can change the number of bins (e.g.: bins = 50 or the bin width e.g.: binwidth = 0.5.
+
+```
+
+Next, we will analyze a data set from a study (Figure \@ref(fig:stacked-histogram)) on the evolutionary adaptation of the flat-tailed horned lizard (*Phrynosoma mcalli*) to its predator, the loggerhead shrike (*Lanius ludovicianus*). In this study they compared the mean horn length of dead lizards (n = 30) with that of living lizards (n = 155) [@young4].
+
+(ref:stacked-histogram) Histograms of horn lengths of live and dead horned lizards.(A) Stacked histograms are misleading;(B) Superimposed histograms make it difficult to observe the distribution of the groups;(C) Histograms are separated into panels and allow the distribution to be displayed individually. 
+
+```{r stacked-histogram, fig.width = 5.5*6/3.5, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap = '(ref:stacked-histogram)', fig.align='center'}
+library(tidyverse)
+library(aplot)
+horned_lizards <- read.csv(file = "data/Chapter04/horned_lizards.csv", 
+              header = TRUE,  sep=",")
+
+h <- ggplot(horned_lizards, aes(x = length))
+
+p1 = h + geom_histogram(aes(fill = survival, color = survival), 
+    position="identity", binwidth = 2, boundary = 0, alpha = 0.3,
+    closed = "left", size = 1) + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = "none") +
+    scale_y_continuous(expand = c(0,0),
+                       limits = c(0,60)) + 
+    scale_x_continuous(limits = c(15,35),
+    breaks = c(15,20,25,30,35)) + 
+    labs(y ="Frecuency", x= "Horn length (mm)") +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "inside",
+    legend.justification.inside = c(0,1))
+
+p3 = h + geom_histogram(aes(fill = survival, color = survival), 
+    position="stack", binwidth = 2, boundary = 0, 
+    closed = "left", size = 1) + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = "none") +
+    scale_y_continuous(expand = c(0,0),
+                       limits = c(0,60)) + 
+    scale_x_continuous(limits = c(15,35),
+    breaks = c(15,20,25,30,35)) + 
+    labs(y ="Frecuency", x= "Horn length (mm)") +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "inside",
+    legend.justification.inside = c(0,1))
+
+p2 = h + geom_histogram(aes(fill = survival, color = survival), 
+    binwidth = 2, boundary = 0, closed = "left", size = 1) + 
+    labs(y ="Frecuency", x= "Horn length (mm)") +
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2")) +
+    scale_y_continuous(expand = c(0,0)) +
+    scale_x_continuous(limits = c(15,35),
+    breaks = c(15,20,25,30,35)) + 
+    facet_wrap( ~ survival, ncol = 2, 
+              scales = "free") +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "none",
+    strip.text = element_text(size = 14, color = "gray40",
+    hjust = 0), strip.background = element_blank(),
+    axis.title.x = element_text(hjust = 0),
+    axis.title.y = element_text(hjust = 1)) 
+
+g1 = aplot::plot_list(p3,p1, ncol = 2)
+
+aplot::plot_list(g1,p2, ncol = 1,tag_levels = c("A","B","C"))
+
+```
+
+There are times when we want to compare different distributions simultaneously and in Figure \@ref(fig:stacked-histogram) we show some examples and discuss each of them. 
+
+Panel (A) shows **stacked histograms**, in which the bars representing the horn length of dead lizards are superimposed on those of live lizards. This form of visualization can be confusing, as it makes it difficult to determine precisely the start of each bar and does not allow direct comparison of the heights of the bars corresponding to dead lizards. \index{Histogram chart!stacked}
+
+An alternative to avoid these drawbacks is to represent the histograms in an overlapping manner (Figure \@ref(fig:stacked-histogram)B). In this visualization, the bars start from zero, which facilitates their interpretation. However, because the live lizard group is more numerous, its data tend to overshadow those of the dead lizards, even when transparency is applied.
+
+While this representation allows one to appreciate the differences between the two groups, an even more effective option is to plot the histograms separately, each with its own scale on the y-axis (Figure \@ref(fig:stacked-histogram)C). In this case, the histograms are organized in individual panels (facet_wrap), which allows us to identify more clearly that the mean horn length in dead lizards ranges from 20 mm to 25 mm, while in live lizards it is approximately 22 mm to 30 mm. \index{facet\_wrap}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+horned_lizards <- read.csv(file = "data/Chapter04/horned_lizards.csv", 
+              header = TRUE,  sep=",")
+
+h <- ggplot(horned_lizards, aes(x = length))
+
+# Stacked histograms
+h + geom_histogram(aes(fill = survival, color = survival), 
+    position="identity", binwidth = 2, boundary = 0, alpha = 0.3,
+    closed = "left", size = 1) + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = "none") +
+    scale_y_continuous(expand = c(0,0),
+                       limits = c(0,60)) + 
+    scale_x_continuous(limits = c(15,35),
+    breaks = c(15,20,25,30,35)) + 
+    labs(y ="Frecuency", x= "Horn length (mm)") +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "inside",
+    legend.justification.inside = c(0,1))
+
+# Superimposed histograms
+
+h + geom_histogram(aes(fill = survival, color = survival), 
+    position="identity", binwidth = 2, boundary = 0, alpha = 0.3,
+    closed = "left", size = 1) + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = "none") +
+    scale_y_continuous(expand = c(0,0),
+                       limits = c(0,60)) + 
+    scale_x_continuous(limits = c(15,35),
+    breaks = c(15,20,25,30,35)) + 
+    labs(y ="Frecuency", x= "Horn length (mm)") +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "inside",
+    legend.justification.inside = c(0,1))
+
+# Make small multiples
+
+h + geom_histogram(aes(fill = survival, color = survival), 
+    binwidth = 2, boundary = 0, closed = "left", size = 1) + 
+    labs(y ="Frecuency", x= "Horn length (mm)") +
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2")) +
+    scale_y_continuous(expand = c(0,0)) +
+    scale_x_continuous(limits = c(15,35),
+    breaks = c(15,20,25,30,35)) + 
+    facet_wrap( ~ survival, ncol = 2, 
+              scales = "free") +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "none",
+    strip.text = element_text(size = 14, color = "gray40",
+    hjust = 0), strip.background = element_blank(),
+    axis.title.x = element_text(hjust = 0),
+    axis.title.y = element_text(hjust = 1)) 
+
+
+```
+
+Histograms have certain disadvantages. When plotting a histogram, only continuous data can be used, and comparing two sets of data is more complicated, so there are better options when comparing two types of data. Finally, we must always be attentive to the width of the garbage cans, in order to obtain more accurate data. 
+
+```{block2, histo, type='rmdtip'}
+__Want to know more?__
+
+- Also, use the argument `scales = “free_y”` to adjust the y-axis scales, since the data have different ranges. This way, each group will have its own panel with an appropriate scale. 
+- If you do not want the color of the border of your chart to appear in the legend, you have to use the argument `guide = “none”` inside the `scale_color` function.
+- You can set the number of rows and columns in the panels; in this example, we use the argument `ncol = 1` to define a single column.
+- We can also change the direction in which the plots are formed with the argument dir and “v”(vertical) or “h”(horizontal), default form).
+- Frequency polygons are similar to histograms but the difference is that you plot connected lines. For this type of graph you use the function `geom_freqpoly()`.
+
+```
+
+## Density chart
+
+Another option for separate histograms is to create a kernel density plot using the `geom_density()` function. This plot represents the distribution of values in a data set across a continuous curve. In addition, the most commonly used kernel is Gaussian, which was applied here using the argument `kernel = “gaussian”`. \index{Density chart}
+
+As with histograms, it is possible to adjust the bandwidth in density plots, similar to adjusting the width of intervals in histograms. In the left plot(Figure \@ref(fig:horn) A), the bandwidth `(bw = 0.2)` is too narrow, resulting in a density estimate that is too irregular. \index{geom\_density function}
+
+(ref:horn) Densities of horn lengths of live and dead horned lizards. The kernel density estimates with different bandwidth parameter: (A) 0.2; (B) 2. 
+
+```{r horn, fig.width = 5.5*6/4, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:horn)', fig.align='center'}
+library(tidyverse)
+library(aplot)
+horned_lizards <- read.csv(file = "data/Chapter04/horned_lizards.csv", 
+              header = TRUE,  sep=",")
+
+h <- ggplot(horned_lizards, aes(x = length))
+
+p1 = h + geom_density(aes(fill = survival, color = survival, 
+    kernel = "gaussian"),
+    alpha = 0.3, bw = 0.2) + 
+    labs(y ="Density", x= "Horn length (mm)") +
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2")) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0,0.1,0.2), labels = c("0","0.1","0.2")) + 
+    scale_x_continuous(expand = c(0, 0),
+    limits = c(15,35),breaks = c(15,20,25,30,35)) +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "inside",
+    legend.justification.inside = c(0,1),
+    legend.background=element_rect(
+      fill = alpha("white", 0.5)))
+
+p2 = h + geom_density(aes(fill = survival, color = survival, 
+    kernel = "gaussian", bw = 2),alpha = 0.3) + 
+    labs(y ="Density", x= "Horn length (mm)") +
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2")) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0,0.04,0.08,0.12,0.16),
+    labels = c("0","0.04","0.08","0.12","0.16")) + 
+    scale_x_continuous(expand = c(0, 0),
+    limits = c(15,35),breaks = c(15,20,25,30,35)) +
+    annotate("text", x = 19.7, y = 0.16, label = "Killed",
+             color = "#D55E00", size = 4.8) +
+    annotate("text", x = 28, y = 0.16, label = "Living",
+             color = "#0072B2", size = 4.8) +
+    theme_us_classic() + 
+    theme(legend.position = "none")
+
+aplot::plot_list(p1,p2, ncol = 2, tag_levels = "A")
+
+```
+
+In contrast, in the right plot (Figure \@ref(fig:horn) B), with a larger bandwidth `(bw = 0.5)`, the density estimate is much more accurate. In addition, the legend was labeled on the graph using the annotate function (Section \@ref(annotation-line)).
+
+You can also fit a density chart on a histogram and you can do it with the argument `y = ..density..` in `geom_histogram ()` and it allows you to adjust the height of the density curves, also you have to play a bit with the transparency of the curves (the graph is not shown). In my opinion, using both graphs at the same time would be unnecessary and would put too much burden on the readers to interpret your data. 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+ h + geom_density(aes(fill = survival, color = survival, 
+    kernel = "gaussian"),
+    alpha = 0.3, bw = 0.2) + 
+    labs(y ="Density", x= "Horn length (mm)") +
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2")) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0,0.1,0.2), labels = c("0","0.1","0.2")) + 
+    scale_x_continuous(expand = c(0, 0),
+    limits = c(15,35),breaks = c(15,20,25,30,35)) +
+    theme_us_classic() + 
+    theme(legend.title = element_blank(), 
+    legend.position = "inside",
+    legend.justification.inside = c(0,1),
+    legend.background=element_rect(
+      fill = alpha("white", 0.5)))
+
+h + geom_density(aes(fill = survival, color = survival, 
+    kernel = "gaussian", bw = 2),alpha = 0.3) + 
+    labs(y ="Density", x= "Horn length (mm)") +
+    scale_fill_manual(values = c("#D55E0090","#0072B290")) + 
+    scale_color_manual(values = c("#D55E00","#0072B2")) +
+    scale_y_continuous(expand = c(0, 0),
+    breaks = c(0,0.04,0.08,0.12,0.16),
+    labels = c("0","0.04","0.08","0.12","0.16")) + 
+    scale_x_continuous(expand = c(0, 0),
+    limits = c(15,35),breaks = c(15,20,25,30,35)) +
+    annotate("text", x = 19.7, y = 0.16, label = "Killed",
+             color = "#D55E00", size = 4.8) +
+    annotate("text", x = 28, y = 0.16, label = "Living",
+             color = "#0072B2", size = 4.8) +
+    theme_us_classic() + 
+    theme(legend.position = "none")
+
+
+```
+
+Some disadvantages of a density chart. They can be misleading in data sets with few points, and it is important to pay attention to the tails of these plots, as they tend to show data where it does not exist. Finally, the shape of the graph may vary according to the Kernel function chosen (rectangular, gaussian), so the representation of the data is often subjective.
+
+```{block2, densit , type= 'rmdtip'}
+
+__Want to know more?__
+
+- In the argument `kernel=` you can choose the type of graph such as rectangular, epanechnikov or gaussian.  
+- You can change the position of the legend using the argument `legend.position =`. The position of legends ("none", "left", "right","inside","bottom", "top", or two-element numeric vector).
+- If you want to have all legends with a transparent background, you can use the following argument `legend.background=element_rect(fill = alpha(“white”, 0.5))`.
+
+```
+
+## Pyramid chart
+
+Pyramid charts allow us to show the distribution of exactly two groups. These graphs are widely used in biology to show mortality rates, birth rates, age or general population levels. \index{Pyramid chart}
+
+Below, we show a dataset on the mortality rate of COVID-19 cases in Italians, accessed March 30, 2020 (https://www.epicentro.iss.it/coronavirus/bollettino/Bollettino-sorveglianza-integrata-COVID-19_30-marzo-2020.pdf). \index{COVID-19}
+
+(ref:pyr) Reported deaths of Italian persons by COVID-19 by age group and sex (March 30, 2020). (A) Diverging bar pyramid chart; (B) lollipop pyramid chart.
+
+```{r pyr, fig.width = 5.5*6/4.2, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:pyr)', fig.align='center'}
+
+library(readxl)
+library(tidyverse)
+
+italy_covid <- read_xlsx(path ="data/Chapter04/italy_covid.xlsx", 
+              col_names = TRUE,  sheet = "italy") %>%
+              dplyr::mutate(numbers_deaths = 
+              ifelse(sex == "male", numbers_deaths,
+                     -numbers_deaths))
+
+i <- ggplot(italy_covid, aes(x = age_group, y = numbers_deaths, 
+          fill = sex, color = sex))
+
+p1 = i + geom_col(stat = "identity", alpha = 0.5) +
+    labs(y = "Numbers of deaths", x = "Age (years)") + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290"),
+    guide = FALSE) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = FALSE) +
+    scale_y_continuous(labels = abs) +
+    geom_hline(yintercept = 0, lty = 1, color = "gray40") +
+    annotate("text", x = 10.3, y = -1000, 
+    label = "Female", color = "#D55E00") + 
+    annotate("text", x = 10.3, y = 1000, 
+    label = "Male", color = "#0072B2") + 
+    coord_flip() +
+    theme_us_classic()
+    
+
+p2 = i + geom_segment(aes(x = age_group,
+    xend = age_group, y = 0, yend = numbers_deaths),
+    lwd = 0.5) +
+    geom_hline(yintercept = 0, lty = 1, color = "gray40") +
+    geom_point(aes(color = sex), size = 4) +
+    labs(y = "Numbers of deaths", x = "Age (years)") + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290"),
+    guide = FALSE) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = FALSE) +
+    scale_y_continuous(labels = abs) +
+    annotate("text", x = 10.3, y = -1000, 
+    label = "Female", color = "#D55E00") + 
+    annotate("text", x = 10.3, y = 1000, 
+    label = "Male", color = "#0072B2") + 
+    coord_flip() +
+    theme_us_classic()
+
+
+aplot::plot_list(p1,p2, ncol = 2, 
+      tag_levels = "A")
+
+```
+
+The data was imported into the program, but to create this graph we need to apply a trick. We need to make the `female` data be displayed as negative numbers. To achieve this, the function `mutate(ifelse)` was used with the corresponding argument. In this way, the `male` group will keep the `numbers_deaths` as positive values, while the female group will have negative values. 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(readxl)
+
+italy_covid <- read_xlsx(path ="data/Chapter04/italy_covid.xlsx", 
+              col_names = TRUE,  sheet = "italy") %>%
+              dplyr::mutate(numbers_deaths = 
+              ifelse(sex == "male", numbers_deaths,
+                     -numbers_deaths))
+
+i <- ggplot(italy_covid, aes(x = age_group, y = numbers_deaths, 
+          fill = sex ))
+              
+```
+
+In Figure \@ref(fig:pyr) A, `Females` are represented by bars on the left of the vertical axis, while `males` are on the right. Each row corresponds to a different age group: 0 to 9 years, 10 to 19 years, etc. \index{geom\_col function}
+
+The pyramid chart on the right uses __lollipop charts__ instead of bar charts (Figure \@ref(fig:pyr) B), offering an alternative using lines and dots. This option makes it easier for the reader to compare the distribution between the two groups. \index{geom\_segment function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+i + geom_col(stat = "identity", alpha = 0.5) +
+    labs(y = "Numbers of deaths", x = "Age (years)") + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290"),
+    guide = FALSE) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = FALSE) +
+    scale_y_continuous(labels = abs) +
+    geom_hline(yintercept = 0, lty = 1, color = "gray40") +
+    annotate("text", x = 10.3, y = -1000, 
+    label = "Female", color = "#D55E00") + 
+    annotate("text", x = 10.3, y = 1000, 
+    label = "Male", color = "#0072B2") + 
+    coord_flip() +
+    theme_us_classic()
+
+i + geom_segment(aes(x = age_group,
+    xend = age_group, y = 0, yend = numbers_deaths),
+    lwd = 0.5) +
+    geom_hline(yintercept = 0, lty = 1, color = "gray40") +
+    geom_point(aes(color = sex), size = 4) +
+    labs(y = "Numbers of deaths", x = "Age (years)") + 
+    scale_fill_manual(values = c("#D55E0090","#0072B290"),
+    guide = FALSE) + 
+    scale_color_manual(values = c("#D55E00","#0072B2"),
+    guide = FALSE) +
+    scale_y_continuous(labels = abs) +
+    annotate("text", x = 10.3, y = -1000, 
+    label = "Female", color = "#D55E00") + 
+    annotate("text", x = 10.3, y = 1000, 
+    label = "Male", color = "#0072B2") + 
+    coord_flip() +
+    theme_us_classic()
+
+
+
+
+```
+
+Examining the graphs (Figure \@ref(fig:pyr)), it is evident that males have a higher proportion of fatalities in most age groups, while females have a higher proportion of fatalities in the 90+ age group. 
+
+The pyramid chart has one main disadvantage. **Pyramid charts** are designed to compare only two variables (usually age and gender), and by adding a third variable, the chart can become complicated and less clear, which decreases its visual effectiveness.
+
+```{block2, pyrami, type='rmdtip'}
+
+__Want to know more?__
+
+- A pyramid chart, it is usually represented by diverging bars using the function `geom_col()` o `geom_bar()`. We also add a line in the middle with the function and argument `geom_hline(yintercept = 0, lty = 2,)`. 
+- For this plot we remove the legend in another way, using the function and argument `scale_fill_discrete(guide = FALSE)` or `scale_color_discrete(guide= FALSE)`.
+- The function `coord_flip()` allows us to rotate our graph. 
+- The function `scale_y_continuous(labels = abs)` allows your Y-axis to have absolute values and no negative numbers. 
+
+```
+
+## Q-Q plot
+
+The __Quantile-Quantile__ plot, also known as the Q-Q plot, illustrates the distribution of our data. In this graph, the y-axis represents the _distribution of observed_ values, while the x-axis shows the expected values for an individual, known as the theoretical quantiles. If the quantiles of our data align perfectly with those of the _theoretical distribution_, the points on the Q-Q plot will be arranged in a straight line, indicating that our data follow a normal distribution (Figure \@ref(fig:qqplot)). 
+\index{Q-Q plot}
+
+(ref:qqplot) Q-Q plot of body temperature (degrees F) of 130 subjects. (A) Without and (B) with a regression line.
+
+```{r qqplot, fig.width = 5.5*6/4.2, fig.asp = 0.5,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:qqplot)', fig.align='center'}
+library(tidyverse)
+library(aplot)
+temperature_body <-  read.csv(file = 
+             "data/Chapter04/human_body_temperature.csv", 
+              header = TRUE,  sep=",")
+
+temperature_body$gender <- factor(temperature_body$gender)
+
+levels(temperature_body$gender) <- c("Male", "Female")
+
+model <- lm(temperature ~ heart_rate, data=temperature_body)
+
+g1 <- ggplot(temperature_body, 
+       aes(sample = rstandard(model))) + 
+stat_qq(color = "#56B4E990", fill="#56B4E9",
+        size = 2.5) +
+labs(x = "Theoretical", 
+    y = "Observed") +
+theme_us_classic() 
+
+
+g2 <- ggplot(temperature_body, 
+       aes(sample = rstandard(model))) + 
+stat_qq_line(color = "gray40") +
+stat_qq(color = "#56B4E990", fill="#56B4E9",
+        size = 2.5) +
+labs(x = "Theoretical", 
+    y = "Observed") +
+theme_us_classic() 
+
+aplot::plot_list(g1,g2,
+       ncol = 2, tag_levels = "A")
+
+```
+
+For this example we use a subset of the data published by [@allen12]. This dataset is composed of 130 samples and includes the variables of body temperature (in °F), gender and heart rate (beats per minute).
+
+To make a Q-Q plot, we must use the `stat_qq()` function. If our data conforms to a normal distribution, it would take the form of a straight line, therefore, it's advisable to graph that line with the `stat_qq_line()` function. 
+\index{stat\_qq function}
+\index{stat\_qq\_line function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+library(tidyverse)
+
+temperature_body <-  read.csv(file = 
+             "data/Chapter04/human_body_temperature.csv", 
+              header = TRUE,  sep=",")
+
+temperature_body$gender <- factor(temperature_body$gender)
+
+levels(temperature_body$gender) <- c("Male", "Female")
+
+model <- lm(temperature ~ heart_rate, data=temperature_body)
+
+# No regression line
+ggplot(temperature_body, 
+       aes(sample = rstandard(model))) + 
+stat_qq(color = "#56B4E990", fill="#56B4E9",
+        size = 2.5) +
+labs(x = "Theoretical", 
+    y = "Observed") +
+theme_us_classic() 
+# Regression line
+ggplot(temperature_body, 
+       aes(sample = rstandard(model))) + 
+stat_qq_line(color = "gray40") +
+stat_qq(color = "#56B4E990", fill="#56B4E9",
+        size = 2.5) +
+labs(x = "Theoretical", 
+    y = "Observed") +
+theme_us_classic()
+
+
+```
+
+Looking at Figure \@ref(fig:qqplot), the temperature of the 130 people has a normal distribution, but if you want to be completely sure of this statement, you should perform a simple statistical analysis. An example was made in the Section \@ref(p-val).
+
+The Q-Q plot has certain disadvantages. Do not go using this plot for a small data set, as with few data points it is difficult to assess the distribution of your data. In addition, the interpretation of a Q-Q plot can be subjective, so it is advisable to perform a statistical test. Finally, this plot does not indicate trends or relationships between variables.
+
+
+## In conclusion 
+
+The area chart is similar to the line chart, but the former shows more visual weight and further emphasizes the overall trend of the data. We showed a variation of the area chart, the stacked area chart, which allows us to display several data series simultaneously, as well as showing parts of the data set. 
+
+We then learned how to make graphs that show us the distribution of our data. In histograms the distribution is shown through bins cans and its appearance depends on the width of the bin can. Another option to visualize the distribution are quantile-quantile plots (Q-Q plot). In this plot, the y-axis represents the distribution of observed values, while the x-axis shows the expected values for an individual, known as theoretical quantiles. 
+
+If we want to display multiple distributions simultaneously, density plots are a good choice. Finally, if we want to visualize only two distributions, pyramid plots are a valid option.
+
+## To practice!
+
+### Exercise 1
+
+Generate a histogram using a data set showing deaths in Switzerland during the 1918 Spanish flu pandemic (https://www.mortality.org/Research/CitationGuidelines). Observe if there is a normal distribution in your data. Another option is to create a density plot instead of a histogram. \index{Spanish flu pandemic}
+
+```{r, error=FALSE, message=FALSE, warning=FALSE}
+
+spanish_flu <- read.csv(file = 
+             "data/Chapter04/spanishflu.csv", 
+              header = TRUE,  sep=",")
+
+```
+
+### Exercise 2
+
+Perform a pyramid chart of the COVID-19 case fatality rate data set for Italians (`italy_covid`). In this case you are going to analyze the relationship of the variables gender and age with the number of cases. 
+
+```{r, error=FALSE, message=FALSE, warning=FALSE}
+
+library(readxl)
+
+italy_covid <- read_xlsx(path ="data/Chapter04/italy_covid.xlsx", 
+              col_names = TRUE,  sheet = "italy") %>%
+              dplyr::mutate(numbers_deaths = 
+              ifelse(sex == "male", numbers_cases,
+                     -numbers_cases))
+
+```
+

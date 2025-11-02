@@ -1,0 +1,154 @@
+# Export your plots {#export-plot}
+
+So far, we have learned how to create graphics, whether static or interactive, by applying some design adjustments. As a final step, it is important to save them on your computer so that you can later include them in a document, such as an article. There are several ways to do this, either manually or using code, and the file format will depend on the selected extension (PNG, PDF, among others). In this chapter, we will explore the different image formats and analyze their advantages and disadvantages.
+
+## Different methods
+
+There are two ways to save your graphs: through the RStudio interface or using code. When you create a plot in RStudio, it is displayed in the output window. Within the “Plots” tab, you will find the “Export” option, which when clicked will open a pop-up window where you can copy and save your plot (Figure \@ref(fig:manual)).  
+
+(ref:manual) Exporting a plot using the Rstudio interface.
+
+```{r manual, out.width='80%',dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:manual)', fig.align='center'}
+
+knitr::include_graphics(rep("images/export.png"))
+```
+
+When you choose the option to save the graphic as an image, another window will appear with more details to set the width and height of your figure. There is also another option that allows you to choose the file format. We will discuss the different formats in more detail later. 
+
+If you want to save yourself the fatigue of saving the chart manually (by clicking), by just using codes you can perform all the steps shown above. 
+
+The first option to save plots is by using the `ggsave()` function of the ggplot2 package, which allows you to save the last plot generated and define parameters such as width, height and units (e.g. in centimeters). \index{ggsave function} Another alternative is to specify the file format directly, as with `pdf()`, then generate the plots and finish with `dev.off()`. This method is especially useful when you need to save multiple graphics simultaneously.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+library(palmerpenguins)
+## First form ##
+
+ggplot(penguins,
+  aes(x = species, y = body_mass_g)) +
+  geom_col() + 
+  theme_us_classic()
+
+ggsave("your_plot.pdf", width = 10, height = 8, 
+       units = "cm") # width and height are in centimeters
+
+## Second form ##
+
+pdf("your_plot.pdf", width = 10/2.54, 
+    height = 8/2.54) # manual conversion in cm
+
+ggplot(penguins, # first plot
+  aes(x = species, y = bill_depth_mm )) +
+  geom_col() + 
+  theme_us_classic()
+
+print(ggplot(penguins, # second plot
+  aes(x = species, y = body_mass_g)) +
+  geom_col() + 
+  theme_us_classic()) 
+
+dev.off()
+
+```
+
+Okay, now you know the two methods of how to save your charts. Remember that the chart will be saved in the file format you choose, in the example above we chose PDF format. Next we will discuss which format to choose.  
+
+## What file format should I use?
+
+Graphics can be saved in different formats, either bitmap or vector. The most popular formats are shown below: 
+
+Name                               Extension    Type       
+---------------------------------  ----------   ------------ 
+Portable Document Format           pdf          vector       
+Scalable Vector Graphics           svg          vector      
+Encapsulated PostScrip             eps          vector
+Portable Network Graphics          png          bitmap       
+Joint Photographic Experts Group   jpg          bitmap       
+Tagged Image File Format           tiff         bitmap      
+Graphics Interchange Format        gif          bitmap       
+
+Vector graphics are generated from mathematical formulas (vectors) that place each point of the image on a grid, allowing it to be resized to any size without losing quality (Figure \@ref(fig:vector-bit) A). On the other hand, bitmap or raster graphics store images using a grid of pixels, where each pixel has a specific color with a specific value. However, when enlarging or reducing the image, the pixels are multiplied or divided, which can result in a loss of visual quality (Figure \@ref(fig:vector-bit) B).
+
+(ref:vector-bit) Key difference between a vector graphic and a bitmap. (A) Magnification of an area in a vector image. The image retains its sharpness and can be scaled to any size without loss of quality. (B) Magnification of an area in a bitmap image. As the image is zoomed in, the pixelation becomes more noticeable. 
+
+```{r vector-bit, out.width='100%',dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:vector-bit)', fig.align='center'}
+
+knitr::include_graphics(rep("images/vector_bit.png"))
+
+```
+
+Vector graphics usually take up less space than raster files, making them easier to store and share. In addition, they can be edited with design programs such as Adobe Illustrator and Inkscape. However, their main limitation is the rendering of photographs; although possible, the resulting files tend to be complex and large.
+
+The most common vector formats are PDF, SVG and EPS. PDF is a universal format, ideal for printing and editable in different design programs. SVG is mainly used for logo creation due to its versatility in web environments. Finally, EPS is widely compatible with older and recent versions of Adobe Illustrator and other vector graphics editors.
+
+On the other hand, the main advantage of bitmap images is their ability to store photographs and complex illustrations, such as rendered 3D graphics. The most commonly used formats include PNG, JPG, TIFF and GIF. JPG/JPEG is ideal for storing photographs, but if the image contains text or lines, PNG or TIFF is preferable. In addition, PNG is especially useful for publishing graphics on web pages due to its compatibility and quality. Finally, GIF allows saving images with animations, being common in dynamic contents.
+
+Bitmap images should be saved or printed at a minimum resolution of 300 pixels per inch (ppi), ensuring optimum quality at the maximum size at which they will be used. At this resolution, the image will retain a sharp appearance. Figure \@ref(fig:bitmap) shows an example of a PNG image in low and high quality.
+
+(ref:bitmap) Structure of SpCas9-sgRNA-DNA ternary complex. (A) Low resolution image (B) High resolution image. The structure can be downloaded in PDB (4UN3).
+
+```{r bitmap, out.width='100%',dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:bitmap)', fig.align='center'}
+
+knitr::include_graphics(rep("images/Cas9.png"))
+
+```
+
+There are programs, both online and desktop, that allow you to convert an image from one format to another. For example, if you have a PDF image, you can convert it to PNG, JPG or another bitmap format to reduce its size, although this may affect sharpness. It is also possible to convert bitmap images to vector formats such as SVG or PDF, but it is advisable to do so only with simple shapes. One option for this process is [Vector Magic](https://es.vectormagic.com/), which offers automatic vectorization.
+
+## In conclusion {#conclusion14}
+
+In this chapter we have explored different methods of saving graphs. Now the question arises: in what format to save them? Among the many available formats, they can be classified into two types: vector and bitmap.
+
+Vector formats (PDF, SVG, EPS) allow the image to be scaled to any size without losing quality, while bitmap formats (JPG, TIFF, GIF) may pixelate when enlarged. Although it is possible to convert images between formats using online or desktop programs, it is advisable to do so only as a last resort.
+
+Ideally, save the original graphic in a high-resolution format, such as PDF, and if you plan to publish it on a web page or include it in a presentation, also save it in PNG.
+
+## To practice!
+
+### Exercise 1
+
+You will use a dataset from a study whose purpose was to assess whether exposure to high concentrations of particulate matter (PM) negatively impacts cognitive performance after 4 hours compared to a cleaner air environment [@Faherty2025]. From this study, you will replicate and optimize Figure 1b of the publication, ensuring a better alignment of the captions and a strategic adjustment of the position of the legend. 
+
+```{r, warning=FALSE, eval=FALSE,error=FALSE}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   readxl
+  )
+
+order_expo <- c(
+  "pre", "post"
+)
+
+cognitive <-  read_xlsx(
+  path = "data/Chapter13/cognitive_functioning.xlsx",
+  col_names = TRUE, sheet = "data"
+) %>%
+mutate(
+  exposure1 = as.factor(exposure1),
+  exposure1 = fct_relevel(exposure1,
+               order_expo)
+)
+
+```
+
+### Exercise 2
+
+Use a data set from a study that identified NKG7 (lysosomal protein) as a CD8+ T lymphocyte-specific regulator of mechanistic target of rapamycin complex 1 (mTORC1) activity [@Ham2025]. You are going to recreate Figure 1B and use the colors carefully, strategically. 
+
+```{r, warning=FALSE, eval=FALSE,error=FALSE}
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggbeeswarm,
+   readxl,
+   aplot
+  )
+
+lysosomal <-  read_xlsx(
+  path = "data/Chapter13/lysosomal_data.xlsx",
+  col_names = TRUE, sheet = "data"
+)
+
+```
+

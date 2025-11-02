@@ -1,0 +1,1577 @@
+# Plots with two or more continuous variables {#plots-more-continuous}
+
+When working with two or more continuous variables, one of the main interests is understanding how they relate to each other. To explore the association between a pair of variables, a commonly used visualization is the scatter plot. However, if you want to show the relationship between more than two variables simultaneously, you can opt for a scatter plot matrix or a correlation plot. 
+
+In situations where the dataset includes a large number of variables, it can be difficult to visualize and interpret all the relationships directly. In these cases, it is useful to apply dimension reduction methods, such as principal component analysis (PCA), a technique that we will discuss in detail in this chapter.
+
+## Scatter plot {#scatter-plot}
+
+This type of plot shows the relationship between two numerical variables, represented by point patterns. If in the graph we are analyzing the point patterns tend to go from the bottom-left to the top-right, it means that the two variables analyzed have a positive relationship. \index{Scatter plot} 
+
+```{r gps0, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Scatter plot show the association between Father's ornamentation and Son's attractiveness using points with fill.",fig.align='center'}
+
+library(tidyverse)
+
+guppies <- read.csv(file = 
+              "data/Chapter05/guppyFather_SonAttractiveness.csv", 
+              header = TRUE,  sep=",")
+gp = ggplot(guppies, 
+     aes(x = fatherOrnamentation, y = sonAttractiveness )) 
+
+gp + geom_point(size = 3, color = "#0072B2") + 
+     labs(y = "Son's attractiveness", 
+     x= "Father's ornamentation") +
+     theme_us_classic() + 
+     theme(plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+I will show a basic scatterplot (Figure \@ref(fig:gps0)) using a dataset from a study by @brooks2000. In this research, they demonstrated that sexual attractiveness in male guppies is heritable and is genetically correlated with ornamentation (color patterns).
+
+```{r}
+
+library(tidyverse)
+
+guppies <- read.csv(file = 
+              "data/Chapter05/guppyFather_SonAttractiveness.csv", 
+              header = TRUE,  sep=",")
+head(guppies, 4)
+
+```
+
+We will work with the guppies data made up of the variables Father's ornamentation and Son's attractiveness (Figure \@ref(fig:gps0)).
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+gp <- ggplot(guppies, 
+     aes(x = fatherOrnamentation, y = sonAttractiveness )) 
+```
+
+Having our data, we are going to corroborate whether there is a relationship between these two variables. On the Y-axis is the response variable (son's attractiveness), while on the X-axis is our explanatory variable (father's ornamentation). 
+\index{geom\_point function} 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+gp + geom_point(size = 3, color = "#0072B2") +
+     labs(y = "Son's attractiveness", 
+     x= "Father's ornamentation") +
+     theme_us_classic()
+
+```
+
+To make our graph we simply need to use the `geom_point()` function. In addition, within this function we can change the color, size and the shape of points (Figure \@ref(fig:gps0)).
+
+We can appreciate that there is a _positive relationship_ in our analyzed variables, presenting a pattern of points already mentioned above. In summary, the most attractive children come from parents with ornamentation, while those parents without this ornamentation would have less attractive children.
+
+```{r gps1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Scatter plot show the association between Fater's ornamentation and Son's attractiveness using points with only outline.",fig.align='center'}
+
+library(tidyverse)
+
+guppies <- read.csv(file = 
+              "data/Chapter05/guppyFather_SonAttractiveness.csv", 
+              header = TRUE,  sep=",")
+gp <- ggplot(guppies, 
+     aes(x = fatherOrnamentation, y = sonAttractiveness )) 
+
+gp + geom_point(size = 3, color = "#0072B2",
+                shape = 21) +
+    labs(y = "Son's attractiveness", 
+    x= "Father's ornamentation") +
+    theme_us_classic() + 
+    theme(plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+The `shape` argument will allow us to change the shape of the point to the person's taste, for this occasion, we configure `shape = 21`. 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+gp + geom_point(size = 3, color = "#0072B2", 
+    shape = 21) +
+    labs(y = "Son's attractiveness", 
+    x= "Father's ornamentation") +
+    theme_us_classic()
+
+```
+
+The unfilled circle style (Figure \@ref(fig:gps1)) might seem adequate to avoid overlapping of the dots; however, it is best to color the dots so that they are clearly visible. An alternative would be to moderately adjust the transparency of the dots using the alpha argument.
+
+In the following Figure \@ref(fig:point0) we show the different shapes that a point can have:
+
+```{r point0, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300, error=FALSE, warning=FALSE, message=FALSE,fig.cap="Different shapes of dots. Shapes from 21 to 25 are open symbols that can be filled with a color.", fig.align='center',echo=FALSE}
+library(tidyverse)
+dat <- tibble(p = c(0:25),
+              x = p %% 6,
+              y = p %/% 6)
+ggplot(dat, aes(x, y)) +
+  geom_text(aes(label = p), size = 3, 
+  nudge_y = -0.2) +
+  geom_point(aes(shape = p), size = 5, 
+  fill = "#56B4E990", color = "gray20") +
+  scale_shape_identity() +
+  theme_void()
+```
+
+There are regression models that can be very useful to perform a more robust analysis on the possible positive relationship between the variables you are working with. One of the best known models is linear regression, and can be implemented using the `geom_smooth()` function with the argument `method=lm` (Figure \@ref(fig:gpst0)). \index{geom\_smooth function}
+
+```{r gpst0, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Scatter plot adding a regression line with its confidence interval.",fig.align='center'}
+
+library(tidyverse)
+
+guppies <- read.csv(file = 
+              "data/Chapter05/guppyFather_SonAttractiveness.csv", 
+              header = TRUE,  sep=",")
+gp <- ggplot(guppies, 
+     aes(x = fatherOrnamentation, y = sonAttractiveness )) 
+
+gp + geom_smooth(method = lm, color = "black") +
+     geom_point(size = 3, color = "#1876ba",
+                alpha = 0.7) +
+     labs(y = "Son's attractiveness", 
+     x= "Father's ornamentation") +
+     theme_us_classic() + 
+     theme (plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+gp + geom_smooth(method = lm, color = "black") +
+     geom_point(size = 3, color = "#1876ba",
+                alpha = 0.7) +
+     labs(y = "Son's attractiveness", 
+     x= "Father's ornamentation") +
+     theme_us_classic()
+
+```
+
+The simple regression line with 95% confidence interval was added and is shown in the gray overlay. If you want a plot without this confidence interval, add the argument `se = FALSE` to the geom_smooth() function, as in `geom_smooth(method=lm, se = FALSE)` (Figure \@ref(fig:gpst1)).
+
+```{r gpst1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Scatter plot adding a regression line without confidence interval.",fig.align='center'}
+
+library(tidyverse)
+
+guppies <- read.csv(file = 
+              "data/Chapter05/guppyFather_SonAttractiveness.csv", 
+              header = TRUE,  sep=",")
+gp <- ggplot(guppies, 
+     aes(x = fatherOrnamentation, y = sonAttractiveness )) 
+gp +  geom_smooth(method = lm, color = "black",
+       se = FALSE) + 
+      geom_point(size = 3, color = "#1876ba",
+                  alpha = 0.7)  +
+      labs(y = "Son's attractiveness", 
+           x= "Father's ornamentation") +
+      theme_us_classic() + 
+      theme(plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+We can change the color of the line, using the argument `color = “black”` inside the `geom_smooth()` function.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+gp +  geom_smooth(method = lm, color = "black",
+       se = FALSE) + 
+      geom_point(size = 3, color = "#1876ba",
+                  alpha = 0.7)  +
+      labs(y = "Son's attractiveness", 
+           x= "Father's ornamentation") +
+      theme_us_classic() 
+
+```
+
+In the following graphs the positive relationship between the ornamentation of the father and the actractive of the son can be seen much more clearly because of the orientation of the line we added. In summary, that sexual attractiveness in male guppies (*Poecilia reticulata*) is heritable and genetically correlated with ornamentation. 
+
+```{r mole, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Daily energy expenditure versus body mass in the two caste groups.",fig.align='center'}
+
+mole_rat <- read.csv(file = 
+          "data/Chapter05/moleRatLayabouts.csv", 
+           header = TRUE,  sep=",")
+r <-  ggplot(mole_rat, aes(x = lnMass, 
+       y = lnEnergy, shape = caste ,color = caste,
+       fill = caste)) 
+r +  geom_smooth(method = "lm", 
+      size = 1, se = FALSE,
+      show.legend = FALSE) + 
+    geom_point(size = 3) +
+     labs(x = "ln(Body mass)", 
+          y = "ln(Daily energy expenditure)") +
+   scale_shape_manual(values = 21:22, name = "Caste") + 
+    scale_color_manual(values = c("#0072B2","#D55E00"),
+                        name = "Caste") +
+     scale_fill_manual(values = c("#0072B290","#D55E0090"),
+                        name = "Caste") +
+     theme_us_classic() + 
+     theme (plot.margin = margin(14, 7, 3, 1.5),
+            legend.key = element_blank())
+
+```
+
+In the following, we present a scatter plot studying two castes of Damaraland worker mole rats (_Cryptomys damarensis_). The researchers divided the castes into __frequent workers__(worker) and __infrequent workers__(lazy) and analyzed in both groups the possible relationship between energy expenditure and body mass [@Scantlebury2006].
+
+```{r}
+
+mole_rat <- read.csv(file = 
+          "data/Chapter05/moleRatLayabouts.csv", 
+           header = TRUE,  sep=",")
+head(mole_rat, 4)
+
+```
+
+As can be seen, the energy expenditure and body mass variables have been logarithmically transformed to improve compliance with the assumptions of the linear models (Figure \@ref(fig:mole)).
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+r <-  ggplot(mole_rat, aes(x = lnMass, 
+       y = lnEnergy, shape = caste ,color = caste,
+       fill = caste)) 
+```
+
+If you look at Figure \@ref(fig:mole), you will notice that the different points have a defined outline and a clear fill. This widely used design style can be achieved by following these steps:
+
+1) Within the `aes()` function, you incorporate the shape, color, and fill arguments, according to the categories.
+2) Then, the shape of the points (Figure \@ref(fig:point0)) is selected using the `scale_shape_manual()` function.
+3) Subsequently, the colors for both fill and outline are defined.
+
+A key detail to adjust the transparency of the fill is to add a number at the end of the color code, in this case “90”, which determines the degree of transparency.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+r +  geom_smooth(method = "lm", 
+      size = 1, se = FALSE,
+      show.legend = FALSE) + 
+    geom_point(size = 3) +
+     labs(x = "ln(Body mass)", 
+          y = "ln(Daily energy expenditure)") +
+   scale_shape_manual(values = 21:22, name = "Caste") + 
+    scale_color_manual(values = c("#0072B2","#D55E00"),
+                        name = "Caste") +
+     scale_fill_manual(values = c("#0072B290","#D55E0090"),
+                        name = "Caste") +
+     theme_us_classic() + 
+     theme (plot.margin = margin(14, 7, 3, 1.5),
+            legend.key = element_blank())
+
+```
+
+As we can see, there is a relationship between energy expenditure and body mass. In addition, it is observed that __infrequent workers__(lazy) spend most of their time in the colony during dry periods, and instead of contributing to the work of the colony, they accumulate body fat to meet the costs of dispersal and reproduction. These conclusions are based on the statistical analyses conducted in the article. An example is shown in Section \@ref(p-val). 
+
+```{r pond, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Study of pond species diversity in relation to \\textit{in situ} primary productivity at local scale. The line represents the estimated quadratic function.",fig.align='center'}
+
+pond <- read.csv(file = 
+          "data/Chapter05/pondplants_productivity.csv", 
+           header = TRUE,  sep=",") 
+pd <-  ggplot(pond, aes(x = productivity, 
+       y = species)) 
+
+pd + geom_smooth(method = "lm",
+      formula = y ~ x + I(x^2), color = "black",
+      se = FALSE) + 
+      geom_point(color = "#0072B2",
+      size = 4) + 
+      labs(x = expression(paste(
+           "Productivity (g ", cm^{2},"/15 d)")), 
+           y = "Producer richness") + 
+      theme_us_classic() + 
+      theme(plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+Next Figure \@ref(fig:pond), we will show the relationship between the number of plant species present in ponds and pond productivity on a local scale [@Chase2002].
+
+```{r}
+
+pond <- read.csv(file = 
+          "data/Chapter05/pondplants_productivity.csv", 
+           header = TRUE,  sep=",")
+head(pond, 4)
+
+```
+
+In this case, we will not observe a linear regression; in fact, the relationship shows a hump-shaped __quadratic curve__ at the local level (between ponds).
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+pd <-  ggplot(pond, aes(x = productivity, 
+       y = species)) 
+```
+
+The quadratic curve is plotted by adding the `formula = y ~ x + I(x^2)` in the function `geom_smooth()`. Normally text strings are placed in the `labs()` function, as can be seen in the previous examples. However, mathematical expressions can be supplied. On this occasion, we want to place an exponent in the axis labels, we must use the argument `x = expression(paste())`, and add the desired exponential separated by commas from the rest of the label name as can be seen `“Productivity (g ‘, cm^{2},’/15 d)”` (Figure \@ref(fig:pond)).
+\index{geom\_smooth function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+pd + geom_smooth(method = "lm",
+      formula = y ~ x + I(x^2), color = "black",
+      se = FALSE) + 
+      geom_point(color = "#0072B2",
+      size = 4) + 
+      labs(x = expression(paste(
+           "Productivity (g ", cm^{2},"/15 d)")), 
+           y = "Producer richness") + 
+      theme_us_classic()
+
+```
+
+In some research, large data sets are available, such as with measurements of black-lipped abalone (_Haliotis rubra_) collected in Bass Strait, which separates Tasmania from the Australian mainland. These data, published by @nash1994, will be used to create a __scatter matrix__ (Figure \@ref(fig:abolone)). \index{Scatter plot!matrix} 
+
+```{r abolone, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Scatterplot matrix of shell diameter and length, plus abalone height and number of rings by genus.",fig.align='center'}
+
+abalone <- read.csv(file = 
+          "data/Chapter05/abalone.data")
+
+colnames(abalone)=c("Sex","Length (mm)","Diameter (mm)",
+"Height (mm)","Whole weight","Shucked weight"
+,"Viscera weight","Shell weight","Rings")
+
+ab <- abalone %>% 
+     dplyr::select("Length (mm)","Diameter (mm)",
+                   Sex,"Height (mm)",Rings)
+
+ab_m <- tidyr::pivot_longer(ab, c("Length (mm)","Diameter (mm)"), 
+         names_to = "first_metric", 
+         values_to = "first_value")
+ab_m <- tidyr::pivot_longer(ab_m, c("Height (mm)",Rings),
+          names_to = "second_metric", 
+          values_to = "second_value")
+
+a <-  ggplot(ab_m, aes(x = first_value, 
+       y = second_value))
+
+a + geom_point(aes(color=Sex, fill = Sex), 
+        size = 3, shape = 21, alpha = 0.5) +
+    facet_grid(second_metric ~ first_metric, 
+          scales = "free",switch = "both") +
+    scale_color_manual(
+    values = c(M= "#56B4E9", F = "#E69F00", 
+               I = "#202020"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL,
+    guide = guide_legend(
+      direction = "horizontal",
+      override.aes = list(size = 2)
+      )) +
+    scale_fill_manual(
+    values = c(M= "#56B4E980", F = "#E69F0080", 
+               I = "#20202080"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL) +
+    theme(strip.placement = "outside",
+    strip.background = element_blank(),
+    strip.text = element_text(size = 14),
+    axis.title = element_blank(),
+    legend.position = "top",
+    legend.key = element_blank(),
+    legend.justification = "left",
+    legend.text = element_text(size = 14),
+    panel.border = element_rect(colour = "black",
+    fill = NA), 
+    panel.background = element_blank(),
+    plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+We will enter our downloaded data in the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/1/abalone). When entering our data, we encounter some difficulty with the variable names. To solve this, it is necessary to assign the names in an orderly fashion using the `colnames()` function. For this demonstration, we will select only four variables using the `select()` function of the dplyr package. \index{colnames function} 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+abalone <- read.csv(file = 
+          "data/Chapter05/abalone.data")
+
+colnames(abalone)=c("Sex","Length (mm)","Diameter (mm)",
+"Height (mm)","Whole weight","Shucked weight"
+,"Viscera weight","Shell weight","Rings")
+
+ab <- abalone %>% 
+     dplyr::select("Length (mm)","Diameter (mm)",
+                   Sex,"Height (mm)",Rings)
+
+head(ab,4)
+```
+
+Next, we will reformat the data so that the selected variables are arranged in the same columns. For this preprocessing, we will use the `pivot_longer()` function of the *tidyr* package.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+ab_m <- tidyr::pivot_longer(ab, c("Length (mm)",
+                "Diameter (mm)"), 
+         names_to = "first_metric", 
+         values_to = "first_value")
+ab_m <- tidyr::pivot_longer(ab_m, 
+          c("Height (mm)",Rings),
+          names_to = "second_metric", 
+          values_to = "second_value")
+```
+
+Another key aspect of our matrix is the creation of facets. To do this, we will again use the `facet_grid()` function, this time with the arguments `scales = “free”` and `switch = “both”`; the latter allows us to place the labels on both axes. \index{facet\_grid function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+a <-  ggplot(ab_m, aes(x = first_value, 
+       y = second_value))
+
+a + geom_point(aes(color=Sex, fill = Sex), 
+        size = 3, shape = 21, alpha = 0.5) +
+    facet_grid(second_metric ~ first_metric, 
+          scales = "free",switch = "both") +
+    scale_color_manual(
+    values = c(M= "#56B4E9", F = "#E69F00", 
+               I = "#202020"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL,
+    guide = guide_legend(
+      direction = "horizontal",
+      override.aes = list(size = 2)
+      )) +
+    scale_fill_manual(
+    values = c(M= "#56B4E980", F = "#E69F0080", 
+               I = "#20202080"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL) +
+    theme(strip.placement = "outside",
+    strip.background = element_blank(),
+    strip.text = element_text(size = 14),
+    axis.title = element_blank(),
+    legend.position = "top",
+    legend.key = element_blank(),
+    legend.justification = "left",
+    legend.text = element_text(size = 14),
+    panel.border = element_rect(colour = "black",
+    fill = NA), 
+    panel.background = element_blank())
+
+```
+
+If you look again at Figure \@ref(fig:abolone), you will notice that the dots are very overlapping due to the large amount of data. Although our solution was to make the points partially transparent, in some cases this measure is not sufficient to solve the problem. To improve the visualization, we replaced the dots with hexagons, filling them with a semi-transparent gray color. This helps to reduce the overlap and allows the hexagons to remain in the background, highlighting the regression lines in the foreground (Figure \@ref(fig:abolone2)). These improvements allow us to clearly appreciate that there is a positive relationship between the different measurements selected.
+
+(ref:abolone2) Scatter plot matrix at different abalone measurements. Unlike the previous Figure \@ref(fig:abolone2), we focus on showing the regression lines in the foreground and the hexagons (individual points) in the background. 
+
+```{r abolone2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:abolone2)',fig.align='center'}
+
+library(tidyverse)
+
+
+abalone <- read.csv(file = 
+          "data/Chapter05/abalone.data")
+
+colnames(abalone)=c("Sex","Length (mm)","Diameter (mm)",
+"Height (mm)","Whole weight","Shucked weight"
+,"Viscera weight","Shell weight","Rings")
+
+ab <- abalone %>% 
+     dplyr::select("Length (mm)","Diameter (mm)",
+                   Sex,"Height (mm)",Rings)
+
+ab_m <- tidyr::pivot_longer(ab, c("Length (mm)","Diameter (mm)"), 
+         names_to = "first_metric", 
+         values_to = "first_value")
+ab_m <- tidyr::pivot_longer(ab_m, c("Height (mm)",Rings),
+          names_to = "second_metric", 
+          values_to = "second_value")
+
+a <-  ggplot(ab_m, aes(x = first_value, 
+       y = second_value))
+
+a + geom_hex(aes(color = Sex, fill = Sex), bins = 50,
+             alpha = 0.5) +
+    geom_smooth(method = "lm",
+                color = "#56B4E9") + 
+    facet_grid(second_metric ~ first_metric, 
+          scales = "free",switch = "both") +
+    scale_color_manual(
+    values = c(M= "#202020", F = "#202020", 
+               I = "#202020"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL,
+    guide = guide_legend(
+      direction = "horizontal",
+      override.aes = list(size = 2)
+      )) +
+    scale_fill_manual(
+    values = c(M= "#20202080", F = "#20202080", 
+               I = "#20202080"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL) +
+    theme(strip.placement = "outside",
+    strip.background = element_blank(),
+    strip.text = element_text(size = 14),
+    axis.title = element_blank(),
+    legend.position = "none",
+    panel.border = element_rect(colour = "black",
+    fill = NA), 
+    panel.background = element_blank(),
+    plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+The `geom_hex()` function was used to replace the points with hexagons, in addition to configuring the bins and transparency. The regression lines were made with the `geom_smooth()` function. 
+\index{geom\_hex function}
+\index{geom\_smooth function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+a + geom_hex(aes(color = Sex, fill = Sex), bins = 50,
+             alpha = 0.5) +
+    geom_smooth(method = "lm",
+                color = "#56B4E9") + 
+    facet_grid(second_metric ~ first_metric, 
+          scales = "free",switch = "both") +
+    scale_color_manual(
+    values = c(M= "#202020", F = "#202020", 
+               I = "#202020"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL,
+    guide = guide_legend(
+      direction = "horizontal",
+      override.aes = list(size = 2)
+      )) +
+    scale_fill_manual(
+    values = c(M= "#20202080", F = "#20202080", 
+               I = "#20202080"),
+    breaks = c("M", "F", "I"),
+    labels = c("Male", "Female","Immature"),
+    name = NULL) +
+    theme(strip.placement = "outside",
+    strip.background = element_blank(),
+    strip.text = element_text(size = 14),
+    axis.title = element_blank(),
+    legend.position = "none",
+    panel.border = element_rect(colour = "black",
+    fill = NA), 
+    panel.background = element_blank(),
+    plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+
+```{block2, aboln, type='rmdtip'}
+
+__Want to know more?__
+
+- You can manually change your colors and specify the order using a named vector: scale_color_manual(values = c(M= "#387be8", F = "#d18f2c", I = "#e0439a").
+- In R there is a set of named colors, you can observe it by executing `colors()` in your console. However, __RGB colors__ are often used and are specified as six-digit __hexadecimal__ (hex) numbers. A hexadecimal color value begins with,__#__, followed by three pairs of hexadecimal numbers. 
+- You can change the items of your legend within the function `scale_color_manual()`. First you specify the argument `breaks = c("M", "F", "I")` and then place the names of your choice, using the argument `labels = c("Male", "Female","Immature")`. 
+- Legend modifications can use the `guide()` argument and customization is done with `guide_legend()`.
+
+```
+
+## PCA plot {#pca-plot}
+
+Principal component analysis (PCA) is a technique used for dimension reduction, which allows a large data set to be simplified to fewer dimensions while retaining as much information as possible. PCA is plotted on a graph and shows a new set of variables (known as principal components, PC), constructed as linear combinations of the original variables. In addition, it is relevant to observe the position of the individual data points within the principal component space. This type of analysis is widely used in biology, for example in gene expression analysis, evolutionary diversity, etc. \index{PCA plot}
+
+
+```{r pca0, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "PCA plot where samples belonging to the same phylogenetic clade tend to cluster closely.",fig.align='center'}
+library(readxl)
+library(ggrepel)
+
+pca <- read_xlsx(path = 
+        "data/Chapter05/pca_mtbc.xlsx",
+       col_names = TRUE, sheet = "pca")
+pc <- ggplot(pca, aes(x = PC1, y = PC2))
+pc + geom_point(aes(color = Lineage), size = 4) + 
+     geom_text_repel(aes(label = Strain), size = 3.5) +
+     labs(x = "PC1: 31% variance", 
+          y = "PC2: 13% variance") +
+     scale_color_brewer(palette = "Dark2") +
+     theme_us_classic() +
+     theme(legend.key = element_blank(),
+           plot.margin = margin(14, 7, 3, 1.5))
+       
+```
+
+We will use a dataset on RNAseq and methylome analysis of the main clades of the *Mycobacterium tuberculosis* complex [@Chiner2019].
+
+```{r}
+
+library(readxl)
+library(ggrepel)
+
+pca <- read_xlsx(path = 
+        "data/Chapter05/pca_mtbc.xlsx",
+       col_names = TRUE, sheet = "pca")
+
+
+```
+
+To import our data we use the `read_xlsx()` function of library(readxl). These data available in the article, PC1 and PC2 are already determined, which made it easier for us to generate our graph (Figure \@ref(fig:pca0)). If you want to determine the PCs of your data, you must run the function `prcomp()`. \index{prcomp function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+pc <- ggplot(pca, aes(x = PC1, y = PC2))
+
+```
+
+On the X-axis are the PC1 values, and on the Y-axis are the PC2 values. Then, we used the geom_point() function to represent the points, coloring them according to bacterial lineages (L1-L6). Each strain was labeled using the __geom_text_repel()__ function of the ggrepel package.
+\index{geom\_text\_repel}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+pc + geom_point(aes(color = Lineage), size = 4) + 
+     geom_text_repel(aes(label = Strain), size = 3.5) +
+     labs(x = "PC1: 31% variance", 
+          y = "PC2: 13% variance") +
+     scale_color_brewer(palette = "Dark2") +
+     theme_us_classic() +
+     theme(legend.key = element_blank())
+
+```
+
+
+```{r pca1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Plot modified to show the exception of two cases.",fig.align='center'}
+library(readxl)
+library(ggrepel)
+library(tidyverse)
+
+pca <- read_xlsx(path = 
+        "data/Chapter05/pca_mtbc.xlsx",
+       col_names = TRUE, sheet = "pca")
+pc <- ggplot(pca, aes(x = PC1, y = PC2))
+
+pc + geom_point(aes(color = Lineage), 
+                size = 4, alpha = 0.35) + 
+     geom_point(data = pca %>% 
+               dplyr::filter(Strain == "N1177"), 
+               color = "black",size = 4) +
+     geom_point(data = pca %>% 
+               dplyr::filter(Strain == "N0031"), 
+               color = "black",size = 4) +
+     geom_text_repel(aes(label = Strain), size = 3.5) +
+     labs(x = "PC1: 31% variance", 
+          y = "PC2: 13% variance") +
+     scale_color_brewer(palette = "Dark2") +
+     theme_us_classic() + 
+     theme(legend.key = element_blank(),
+           plot.margin = margin(14, 7, 3, 1.5))
+       
+```
+
+We have generated our PC plot, in which you can see two strains that are not in your *phylogenetic clade*. To quickly highlight these exceptions to the public, it is necessary to slightly adjust the scatter plot, highlighting those two strains. To do this, we will add additional layers with `geom_point()` and color strains N1177 and N0031 in black, thus capturing attention (Figure \@ref(fig:pca1)). \index{geom\_point function}  
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+
+pc + geom_point(aes(color = Lineage), 
+                size = 4, alpha = 0.35) + 
+     geom_point(data = pca %>% 
+               dplyr::filter(Strain == "N1177"), 
+               color = "black",size = 4) +
+     geom_point(data = pca %>% 
+               dplyr::filter(Strain == "N0031"), 
+               color = "black",size = 4) +
+     geom_text_repel(aes(label = Strain), size = 3.5) +
+     labs(x = "PC1: 31% variance", 
+          y = "PC2: 13% variance") +
+     scale_color_brewer(palette = "Dark2") +
+     theme_us_classic() + 
+     legend.key = element_blank()
+
+```
+
+We then observed our graphs and that most of the samples (19 strains) belonging to the same phylogenetic lineage are closely clustered in the PCA.
+
+PCA is a powerful and flexible technique, but it has some limitations: 
+
+- It assumes that the data are linear, that is, that there is a linear relationship between the variables. However, if the data have curved or cyclical patterns, PCA will not be able to correctly represent the structure of the data. 
+
+- Another disadvantage of this technique is the difficulty in deciding how many principal components (PC) to use, seeking to capture as much information as possible without losing important details. In this example, the authors already performed the PC analysis, which made it easier for us to create the graph. However, when working with your own data, you will need to apply appropriate criteria and methods to determine the optimal number of PCs.
+
+
+```{block2, pcaplot, type='rmdtip'}
+
+__Want to know more?__
+
+The [factoextra](https://doi.org/10.32614/CRAN.package.factoextra) package offers easy-to-use functions for extracting and visualizing the results of multivariate data analysis, such as Principal Component Analysis (PCA).
+
+```
+
+## Volcano plot {#volcano-plot}
+
+It is a scatter plot where the Y-axis represents the p or p-adjusted values transformed into negative logarithm in base 10, and the X-axis shows the fold change (positive or negative), in summary shows the statistical significance versus the magnitude of the change. In biology, this graph is commonly used to visualize changes in the expression of multiple genes between two samples. \index{Volcano plot} Values of p < 0.05 indicate higher significance, and higher points on the Y-axis correspond to genes with statistically significant differences. Likewise, extreme values on the X-axis reflect notable differences in gene expression [@Rosati2024].
+
+Next, we will use a data set from a study on SARS-CoV-2-reactive CD4+ T cells, where the antigenic avidity and clonality of these cells was examined, as well as the relative contribution of cross-reactivity with common cold coronaviruses (CCCoV) [@Bacher2020].
+
+```{r volcan0, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Folicular helper-like T cells (Tfh-like) in severe COVID versus healthy patients. Without differentiating gene expression.",fig.align='center'}
+library(ggrepel)
+
+t_cell <- read.csv(file =
+        "data/Chapter05/Tcelldata_Bacher.csv",
+        header = TRUE,  sep=",")
+
+t <- ggplot(t_cell, aes(x = log2fc, y = -log10(pval)))
+
+t + geom_vline(xintercept = c(-0.6, 0.6), 
+    col = "black", linetype = 'dashed') +
+    geom_hline(yintercept = -log10(0.05), 
+    col = "black", linetype = 'dashed') +
+    geom_point(color = "blue") + 
+    labs(x = "log2 fold change") +
+    theme_us_classic() +
+    theme(plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+
+```{r volcan, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Genes with different expression are shown.",fig.align='center'}
+library(ggrepel)
+
+t_cell <- read.csv(file =
+        "data/Chapter05/Tcelldata_Bacher.csv",
+        header = TRUE,  sep=",")
+
+t_cell$Expression = "Unchanged"
+
+t_cell$Expression[t_cell$log2fc > 0.6 
+      & t_cell$pval < 0.05] <- "Up-regulated"
+
+t_cell$Expression[t_cell$log2fc < -0.6 
+      & t_cell$pval < 0.05] <- "Down-regulated"
+
+t <- ggplot(t_cell, aes(x = log2fc, y = -log10(pval), 
+          color = Expression))
+
+t + geom_vline(xintercept = c(-0.6, 0.6), 
+    col = "black", linetype = 'dashed') +
+    geom_hline(yintercept = -log10(0.05), 
+    col = "black", linetype = 'dashed') +
+    geom_point() + 
+    labs(x = "log2 fold change") +
+    scale_color_manual(values = c("dodgerblue3", 
+                      "gray50", "firebrick3")) +
+    coord_cartesian(ylim = c(0, 50), 
+                    xlim = c(-10, 10)) +
+    theme_us_classic() +
+    theme(plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+
+```{r}
+
+library(ggrepel)
+library(tidyverse)
+
+t_cell <- read.csv(file =
+        "data/Chapter05/Tcelldata_Bacher.csv",
+        header = TRUE,  sep=",")
+
+```
+
+After entering our data, we will use the `geom_point()` function and specify on the X-axis the log2 fold change, while on the Y-axis we represent the p -log10 values using the `-log10()` argument (Figure \@ref(fig:volcan0)).
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+t <- ggplot(t_cell, aes(x = log2fc, y = -log10(pval)))
+
+```
+
+A distinctive feature of these graphs is the inclusion of thresholds that act as boundaries for the genes. Threshold lines will be added using the `geom_hline()` and `geom_vline()` functions, which allow additional horizontal and vertical lines to be incorporated into the graph. The limits for genes will be pval <= 0.05 and log2fc <= -0.6 or fold_change >= 0.6.
+\index{geom\_hline function}
+\index{geom\_vline function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+t + geom_vline(xintercept = c(-0.6, 0.6), 
+    color = "black", linetype = 'dashed') +
+    geom_hline(yintercept = -log10(0.05), 
+    color = "black", linetype = 'dashed') +
+    geom_point(color = "blue") + 
+    labs(x = "log2 fold change") +
+    theme_us_classic() 
+
+```
+
+It is common to differentiate groups of genes with significant differential expression (GED). For this purpose, a column called `Expression` will be added, indicating whether a gene is up-regulated, down-regulated or unchanged.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+t_cell$Expression = "Unchanged"
+
+t_cell$Expression[t_cell$log2fc > 0.6 & 
+       t_cell$pval < 0.05] <- "Up-regulated"
+
+t_cell$Expression[t_cell$log2fc < -0.6 
+       & t_cell$pval < 0.05] <- "Down-regulated"
+
+```
+
+On the right side of the Figure \@ref(fig:volcan) the three groups of genes can be distinguished using the `scale_color_manual()` function. The `coord_cartesian()` function was used to focus on certain boundaries of the graph. It is usual to use gray color for unchanged genes, while bright colors are chosen for the gene groups we are interested in highlighting. \index{coord\_cartesian function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+t <- ggplot(t_cell, aes(x = log2fc, y = -log10(pval), 
+          color = Expression))
+
+t + geom_vline(xintercept = c(-0.6, 0.6), 
+    col = "black", linetype = 'dashed') +
+    geom_hline(yintercept = -log10(0.05), 
+    col = "black", linetype = 'dashed') +
+    geom_point() + 
+    labs(x = "log2 fold change") +
+    scale_color_manual(values = c("dodgerblue3", 
+                      "gray50", "firebrick3")) +
+    coord_cartesian(ylim = c(0, 50), 
+                    xlim = c(-10, 10)) +
+    theme_us_classic()
+
+
+```
+
+We can observe in the graphs the expression of different genes in the two samples analyzed (severe COVID vs healthy patients). 
+
+It is usual to display the gene names in the graph. In this case, only 10 genes from the groups of interest (up and down-regulated) will be displayed, and a subset of data called `top_genes` will be generated, which will include the 20 genes from both groups (Figure \@ref(fig:volcan2)).
+
+```{r volcan2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Volcano plot with gene symbols using the geomtextrepel function.",fig.show='hold',fig.align='center'}
+
+library(tidyverse)
+
+top = 10
+top_genes <- dplyr::bind_rows(
+    t_cell %>% 
+     dplyr::filter(Expression == 'Up-regulated') %>% 
+     dplyr::arrange(pval, desc(abs(log2fc))) %>% 
+     head(top),
+    t_cell %>% 
+     dplyr::filter(Expression == 'Down-regulated') %>% 
+     dplyr::arrange(pval, desc(abs(log2fc))) %>% 
+     head(top)
+)
+
+t <- ggplot(t_cell, aes(x = log2fc, y = -log10(pval), 
+          color = Expression))
+t + geom_vline(xintercept = c(-0.6, 0.6), 
+    col = "black", linetype = 'dashed') +
+    geom_hline(yintercept = -log10(0.05), 
+    col = "black", linetype = 'dashed') +
+    geom_point() + 
+    labs(x = "log2 fold change") +
+    scale_color_manual(values = c("dodgerblue3", 
+                      "gray50", "firebrick3")) +
+    geom_text_repel(top_genes, mapping = 
+                    aes(log2fc, -log(pval,10),
+                    label = gene_symbol), size = 2) +
+    coord_cartesian(ylim = c(0, 250), 
+                    xlim = c(-10, 10)) +
+    theme_us_classic() + 
+    theme(plot.margin = margin(14, 7, 3, 1.5))
+
+
+```
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+top = 10
+top_genes <- bind_rows(
+    t_cell %>% 
+     dplyr::filter(Expression == 'Up-regulated') %>% 
+     dplyr::arrange(pval, desc(abs(log2fc))) %>% 
+     head(top),
+    t_cell %>% 
+     dplyr::filter(Expression == 'Down-regulated') %>% 
+     dplyr::arrange(pval, desc(abs(log2fc))) %>% 
+     head(top)
+)
+
+```
+
+The `geom_text_repel()` function of library(ggrepel) was used to add the symbols for the 20 genes. Another option is to add bullets using the `geom_label_repel()` function. However, adding bullets in a large data set would complicate the visualization of your chart.  
+\index{geom\_text\_repel}
+\index{geom\_label\_repel}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+t + geom_vline(xintercept = c(-0.6, 0.6), 
+    col = "black", linetype = 'dashed') +
+    geom_hline(yintercept = -log10(0.05), 
+    col = "black", linetype = 'dashed') +
+    geom_point() + 
+    labs(x = "log2 fold change") +
+    scale_color_manual(values = c("dodgerblue3", 
+                      "gray50", "firebrick3")) +
+    geom_text_repel(top_genes, mapping = 
+                    aes(log2fc, -log(pval,10),
+                    label = gene_symbol), size = 2) +
+    coord_cartesian(ylim = c(0, 250), 
+                    xlim = c(-10, 10)) +
+    theme_us_classic()
+
+
+```
+
+This type of plot has some limitations:
+
+- The interpretation of the data depends on the thresholds established for significance and change in expression, which can be arbitrary. 
+
+- In addition, it tends to highlight only genes with large changes and statistical significance, while those with moderate expressions, which could be relevant, tend to be relegated. 
+
+```{block2, volcanplot, type='rmdtip'}
+
+__Want to know more?__
+
+- OmicsVolcano is a web tool designed for biologists that allows interactive exploration of omics data, as well as highlighting features of interest through a volcano graphics interface [@kuznetsova2]. This software is open source and you can find it at the following GitHub: https://github.com/IrinaVKuznetsova/OmicsVolcano
+- The packages [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html) and [Deseq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html) are widely used to analyze differential gene expression from RNA-seq data.
+
+```
+
+
+## Correlation plot {#correlation-plot}
+
+Correlation plot or correlation heatmap allows visualizing the _correlation coefficients_ between each pair of numerical variables. \index{Correlation plot} The purpose of the plot is to show how one variable varies as a function of another, which requires calculating the correlation coefficients. There are three methods for calculating correlation coefficients: Pearson's correlation coefficient, Spearman's rank correlation coefficient and Kendall's correlation coefficient. Regardless of the method used, the correlation coefficient between two variables is a value ranging from [-1,1]. A value of 1 indicates a total correlation between the two attributes, 0 indicates no correlation, and -1 indicates a total anti-correlation [@Dudas2024].
+
+In this example, we will use a dataset from a study that identified a strong positive regulation of p53 signaling in amyotrophic lateral sclerosis (ALS) in both human induced pluripotent stem cells (iPSMN) and postmortem spinal [@Ziff2023]. These datasets were downloaded from the article and we will use `library(readxl)`.
+
+```{r heatmap, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Heatmap correlation showing Pearson's correlation coefficient in postmortem tissue genes.",fig.show='hold',fig.align='center'}
+
+library(readxl)
+
+correlation <- read_xlsx(path = 
+        "data/Chapter05/MOESM6_ESM.xlsx",
+       col_names = TRUE, sheet = "Fig 4H")
+cor_p <- ggplot(correlation, aes(x = subgroup1, 
+              y = subgroup2, fill= pearson))
+cor_p + 
+ geom_tile(color = "white") +  
+ scale_fill_gradient2(low = "blue", high = "red", 
+    mid = "white", midpoint = 0, limit = c(-1,1), 
+    space = "Lab", name="Pearson\nCorrelation") + 
+ geom_text(aes(subgroup1, subgroup2, label = pearson), 
+    color = "white", size = 5)  +
+ scale_y_discrete(limits = 
+      c("FUS", "SOD1", "Sporadic","C9orf72")) +
+ scale_x_discrete(limits = 
+      c("FUS", "SOD1", "Sporadic","C9orf72"))+
+ theme_us_classic() + 
+ theme(axis.title = element_blank(),
+       axis.line = element_blank(),
+       panel.grid.major = element_blank(), 
+       panel.border = element_blank(), 
+       axis.ticks = element_blank(),
+      legend.position = "top", 
+      legend.direction = "horizontal", 
+      legend.title = element_text(size = 10),
+      plot.margin = margin(14, 7, 3, 1.5)) +
+coord_flip() +
+ guides(fill = guide_colorbar(barwidth = 7, barheight = 1, 
+       title.position = "top", title.hjust = 0.5))
+
+
+```
+
+```{r}
+
+library(readxl)
+
+correlation <- read_xlsx(path = 
+        "data/Chapter05/MOESM6_ESM.xlsx",
+       col_names = TRUE, sheet = "Fig 4H")
+head(correlation, 4)
+
+```
+
+In these data, the Pearson correlation coefficients are already calculated and are in the `pearson` variable. If we had the raw data, we would have to calculate the correlation coefficients, and for this we could use the `cor()` function of the `library(ggcorrplot)`. 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+cor_p <- ggplot(correlation, aes(x = subgroup1, 
+              y = subgroup2, fill= pearson))
+```
+
+This plot displays a colored grid, where each quadrant is determined by the value of the correlation coefficient between a pair of attributes. The grids are generated with the `geom_tile()` function and it is possible to customize the edges using the color=“white” argument. \index{geom\_tile function} To apply the coloring, the `scale_fill_gradient2()` function was used, which is very useful for creating a three-color gradient. In addition, it is possible to define the colors for low, medium and high values, and to set the range from -1 to 1 (Figure \@ref(fig:heatmap)).
+
+A common and useful option in these plots is to display the correlation coefficients, which facilitates comparison between attributes (in this case, genes). To do this, the `geom_text()` function was used together with the `label=pearson` argument to display the values of the correlation coefficients. \index{geom\_text function} 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+cor_p + 
+ geom_tile(color = "white") +  
+ scale_fill_gradient2(low = "blue", high = "red", 
+    mid = "white", midpoint = 0, limit = c(-1,1), 
+    space = "Lab", name="Pearson\nCorrelation") + 
+ geom_text(aes(subgroup1, subgroup2, label = pearson), 
+    color = "white", size = 5)  +
+ scale_y_discrete(limits = 
+      c("FUS", "SOD1", "Sporadic","C9orf72")) +
+ scale_x_discrete(limits = 
+      c("FUS", "SOD1", "Sporadic","C9orf72"))+
+ theme_us_classic() + 
+ theme(axis.title = element_blank(),
+       axis.line = element_blank(),
+       panel.grid.major = element_blank(), 
+       panel.border = element_blank(), 
+       axis.ticks = element_blank(),
+      legend.position = "top", 
+      legend.direction = "horizontal", 
+      legend.title = element_text(size = 10)) +
+coord_flip() +
+ guides(fill = guide_colorbar(barwidth = 7, barheight = 1, 
+       title.position = "top", title.hjust = 0.5))
+
+
+```
+
+As we can see in our graph the comparison between genetic subgroups of post-mortem spinal cord tissue revealed gene expression changes with a high correlation (R-range from +0.68 to +0.9), identifying 1750 differentially expressed genes overlapping between the sporadic, C9orf72, SOD1 and FUS subgroups (Figure \@ref(fig:heatmap)).
+
+This type of plot has some limitations [@Dudas2024]:
+
+- The correlation shown in the graph only reflects the linear relationship between two attributes, but there could be other types of relationships that are not captured by the correlation. 
+
+- As the horizontal size of the data set increases, readability and interpretation of correlation values are compromised.
+
+- You can supplement the correlation map with the correlation matrix to clarify possible ambiguities in the coefficient values. However, in most publications, it is common to present the correlation map together with the values at the same time (Figure \@ref(fig:heatmap)).
+
+
+```{block2, heat, type='rmdtip'}
+
+__Want to know more?__
+
+- To create rectangles in a graph, the functions geom_rect() and geom_tile() are commonly used. The difference between them is that with __geom_rect()__, the scale transformation is applied to the corners of the rectangles, while with __geom_tile()__, the transformation only affects the centers and the size is determined after the transformation. 
+
+- The __ggcorrplot__ package is an extension of ggplot2 that offers several options for displaying a correlation matrix. One of these options is to reorder the correlation matrix and display the significance level in the correlogram (DOI: https://doi.org/10.32614/CRAN.package.ggcorrplot). 
+
+- The guides for each scale can be set individually using the guide argument, or together using the __guides()__ function. 
+
+```
+
+## Line plot {#line-plot}
+
+The line plot is a common and easy-to-interpret representation that shows values over a continuous period, allowing trends and patterns to be visualized. \index{Line plot} Generally, this type of plot presents continuous data on the vertical (y-axis) and horizontal (x-axis) axes. However, in some cases, line plots may not use continuous data on the x-axis. You should not use this plot to show scattered data sets and part-whole comparisons.
+
+```{r lineplot0, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Line plot showing measles cases in the UK, with quarterly time intervals between 1995 and 2011. The dots (values) are connected by lines, helping our eyes to see the order of the data.",fig.align='center'}
+
+library(tidyverse)
+library(lubridate)
+
+measles <- read.csv(
+  file = "data/Chapter05/measles_outbreaks.csv", 
+  header = TRUE
+  )
+
+measles$year =  as.Date(paste0(measles$year, "-01-01"),
+format = "%Y-%m-%d")
+
+m <- ggplot(measles, aes(x =year, y = confirmedCases))
+
+m + geom_line(aes(fill = quarter,
+                  color = quarter), size = 1) +
+    geom_point(aes(shape = quarter,
+                   color = quarter,
+                   fill = quarter), size = 2) +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0, 0),
+            name = "Confirmed cases") +
+    scale_x_date(name = NULL,
+            limits = c(min(measles$year), ymd("2011-01-01"))) +
+    scale_color_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    scale_fill_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    scale_shape_manual(values = c(21, 22, 23,24),
+                     name = NULL) + 
+    theme_us_classic() +
+    theme(legend.key = element_blank(),
+          plot.margin = margin(18, 6, 3, 1.5))
+
+```
+ 
+As an example of a time series, we will use a dataset on measles cases in the United Kingdom, with quarterly intervals from 1995 to 2011. Prior to the implementation of mass vaccination, measles caused the death of hundreds of people per year in the UK. Following the introduction of the measles, mumps and rubella (MMR) MMR vaccine in 1988, vaccine uptake increased rapidly, reaching a national average of 91% in 1998 [@Jansen2003]. 
+
+However, in the same year, a study was published that introduced the term autistic enterocolitis and suggested a possible connection between intestinal disorders, autism and the MMR vaccine. Following this publication, several scientists attempted to replicate Andrew Wakefield's results without success. Numerous comprehensive reviews were conducted, concluding that there is no link between autism and the MMR vaccine. As expected, this study caused great concern among some parents and part of the medical community, which significantly affected vaccination rates [@rodriguez2]. 
+
+Although generating a line chart may seem straightforward, it is important to keep in mind certain aspects, which we will discuss throughout this section.
+
+```{r, error=FALSE, message=FALSE, warning=FALSE}
+
+measles <- read.csv(
+  file = "data/Chapter05/measles_outbreaks.csv", 
+  header = TRUE
+  )
+
+measles$year =  as.Date(paste0(measles$year, "-01-01"),
+format = "%Y-%m-%d")
+
+head(measles)
+
+```
+
+The `year` column was converted to a *Date* variable using the function `as.Date(paste0(sarampion$year, “-01-01”), format = “%Y-%m-%d”)`. Having already converted our variable, we made our quarterly grouped line plot. 
+
+```{r, error=FALSE, message=FALSE, warning=FALSE}
+
+m <- ggplot(measles, aes(x =year, y = confirmedCases))
+
+```
+
+To create Figure \@ref(fig:lineplot0), we first plotted the lines using the `geom_line()` function and then added the points with `geom_point()`. \index{geom\_line function} The points were plotted as a function of quarterly time intervals using the `shape = quarter` argument. Subsequently, the colors, the filling of the plots and the shape of the points were manually selected, as shown in Figure \@ref(fig:point0).
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+m + geom_line(aes(fill = quarter,
+                  color = quarter), size = 1) +
+    geom_point(aes(shape = quarter,
+                   color = quarter,
+                   fill = quarter), size = 2) +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0, 0),
+            name = "Confirmed cases") +
+    scale_x_date(name = NULL,
+            limits = c(min(measles$year), ymd("2011-01-01"))) +
+    scale_color_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    scale_fill_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    scale_shape_manual(values = c(21, 22, 23,24),
+                     name = NULL) + 
+    theme_us_classic() +
+    theme(legend.key = element_blank())
+
+```
+
+Figure \@ref(fig:lineplot0) shows a series of line plots with data markers, each with a different shape depending on the group. Although it may be tempting to use different shapes for the markers, this adds unnecessary cognitive load. In addition, separating the legend from the graph also adds to that cognitive load. It is advisable to take advantage of the ample space available on the graph to reduce this problem.
+
+(ref:lineplot1) Cognitive load was decreased in Figure \@ref(fig:lineplot0) by eliminating the data points and placing the legend within the graph, making better use of the available white space.
+
+```{r lineplot1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:lineplot1)',fig.align='center'}
+
+library(tidyverse)
+library(lubridate)
+
+measles <- read.csv(
+  file = "data/Chapter05/measles_outbreaks.csv", 
+  header = TRUE
+  )
+measles$year =  as.Date(paste0(measles$year, "-01-01"),
+format = "%Y-%m-%d")
+
+m <- ggplot(measles, aes(x =year, y = confirmedCases))
+
+m + geom_line(aes(fill = quarter,
+                  color = quarter), size = 1) +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0, 0),
+            name = "Confirmed cases") +
+    scale_x_date(name = NULL,
+            limits = c(min(measles$year), ymd("2011-01-01"))) +
+    scale_color_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    scale_fill_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    geom_vline(xintercept=as.numeric(measles$year[c(25)]),
+                linetype= "dashed", colour="gray40") +
+    theme_us_classic() +
+    theme(legend.key = element_blank(),
+          legend.position = c(0.1,0.9),
+          legend.just = c(0, 1),
+          plot.margin = margin(18, 6, 3, 1.5))
+
+```
+
+In Figure \@ref(fig:lineplot1), the lines were plotted using a different color for each group, and a reference line was added with the `geom_vline()` function in 2005, since a significant increase in confirmed measles cases was observed after that point. \index{geom\_vline function} Crucially, the x-axis must be a numeric variable when plotting the line. Finally, the `legend.position` and `legend.just` arguments were used to place the legend on the graph.
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+m + geom_line(aes(fill = quarter,
+                  color = quarter), size = 1) +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0, 0),
+            name = "Confirmed cases") +
+    scale_x_date(name = NULL,
+            limits = c(min(measles$year), ymd("2011-01-01"))) +
+    scale_color_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    scale_fill_manual(values = c("#CC79A7","#0072b2",
+                     "#009e73", "#D55E00"),
+                     name = NULL) +
+    geom_vline(xintercept=as.numeric(measles$year[c(25)]),
+                linetype= "dashed", colour="gray40") +
+    theme_us_classic() +
+    theme(legend.key = element_blank(),
+          legend.position = c(0.1,0.9),
+          legend.just = c(0, 1))
+
+```
+
+Figure \@ref(fig:lineplot1) presents a proper visualization of our data set, reducing the visual burden by eliminating individual point markers on the line. This does not mean that data markers should never be used, but they should be used for a clear purpose, such as highlighting maximum and minimum values. At those points you could also add a concise concept to highlight key information. In addition, the legend was moved to the wide space within the chart, a common practice in publications, although it should be done judiciously. In this case, it would be best to label the lines directly rather than using a separate legend. 
+
+(ref:lineplot2) In this multi-line graph, color was used strategically. The blue line stands out to represent the largest number of confirmed cases, contrasting with the other groups, which are shown with gray lines. In addition, the legend was directly integrated into the line. 
+
+```{r lineplot2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:lineplot2)',fig.align='center'}
+
+library(tidyverse)
+
+library(lubridate)
+
+measles <- read.csv(
+  file = "data/Chapter05/measles_outbreaks.csv", 
+  header = TRUE
+  )
+
+
+m <- ggplot(measles, aes(x =year, y = confirmedCases))
+
+# measles %>% filter(year == 2011)
+
+measles_label <- tribble(~label,~year, ~confirmedCases, ~quarter,  
+                 "1st", 2011.2, 151, "1st",
+                 "2nd", 2011.2, 347, "2nd",
+                 "3rd", 2011.2, 173,  "3rd",
+                 "4th", 2011.2, 128, "4th")
+
+
+m + geom_line(aes(fill = quarter,
+                  color = quarter), size = 1) +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0, 0),
+            name = "Confirmed cases") +
+    scale_x_continuous(breaks = c(1995,2000,2005,2011),
+    labels = c(
+    "1995", "2000", "2005", "2010-2011"),
+    name = "") + 
+    scale_color_manual(values = c("gray50","#0072b2",
+                     "gray50", "gray50"),
+                     name = NULL) +
+    geom_text(data = measles_label,
+          mapping = aes(x = year, 
+                  y = confirmedCases,
+                  color = quarter,
+                  label = label),
+          show.legend = FALSE, size = 10, 
+          size.unit = "pt",hjust = 0, lineheight = 0.8) +
+    geom_vline(xintercept=as.numeric(measles$year[c(25)]),
+                linetype= "dashed", colour="gray30") +
+    coord_cartesian(xlim = c(1995,2012),
+                clip = "off", expand = FALSE) + 
+    theme_us_classic() +
+    theme(legend.position = "none", 
+          plot.margin = margin(18, 6, 3, 1.5))
+
+```
+
+In Figure \@ref(fig:lineplot2), some adjustments were made to highlight a line of interest and label the legend directly on the graph. This strategy allows the reader to focus on the line that represents the largest number of cases, because this is our objective. 
+
+In order to carry out this strategy, a series of steps were taken, which will be mentioned below: 
+
+1. We will create a small data table with the variables `~label`, `~year`, `~confirmedCases` and `~quarter`. To do this, we will use the `tribble()` function from the tibble package. The `~label` variable is new and will be used to add the names of the labels we want to display in the chart. On the other hand, the `~year` and `~confirmedCases` variables already existed, but they are essential to correctly position the labels. The ~quarter variable contains the original labels.
+
+2. Next, we use the `coord_cartesian()` function to define the X-axis limits using the `xlim` argument. We also include `clip = “off”` to prevent the chart from being clipped within the plot panel. \index{coord\_cartesian function} In addition, we use expand = FALSE to ensure that the specified limits are applied exactly.
+
+3. Finally, we incorporate the labels into the plot using the `geom_text()` function (Section \@ref(annotation-line)). \index{geom\_text function} 
+
+In addition, an additional adjustment was applied in Figure \@ref(fig:lineplot2). When examining the data, it is observed that the last year with available report is 2011, so it is important to reflect it in the graph. To achieve this, the labels argument was used within the `scale_x_continuous()` function.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+measles_label <- tribble(~label,~year, ~confirmedCases, ~quarter,  
+                 "1st", 2011.2, 151, "1st",
+                 "2nd", 2011.2, 347, "2nd",
+                 "3rd", 2011.2, 173,  "3rd",
+                 "4th", 2011.2, 128, "4th")
+
+
+m + geom_line(aes(fill = quarter,
+                  color = quarter), size = 1) +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0, 0),
+            name = "Confirmed cases") +
+    scale_x_continuous(breaks = c(1995,2000,2005,2011),
+    labels = c(
+    "1995", "2000", "2005", "2010-2011"),
+    name = "") + 
+    scale_color_manual(values = c("gray50","#0072b2",
+                     "gray50", "gray50"),
+                     name = NULL) +
+    geom_text(data = measles_label,
+          mapping = aes(x = year, 
+                  y = confirmedCases,
+                  color = quarter,
+                  label = label),
+          show.legend = FALSE, size = 10, 
+          size.unit = "pt",hjust = 0, lineheight = 0.8) +
+    geom_vline(xintercept=as.numeric(measles$year[c(25)]),
+                linetype= "dashed", colour="gray30") +
+    coord_cartesian(xlim = c(1995,2012),
+                clip = "off", expand = FALSE) + 
+    theme_us_classic() +
+    theme(legend.position = "none")
+
+```
+
+In Figure \@ref(fig:lineplot2), the data visualization is much clearer. The line with the highest number of confirmed cases was highlighted, while the others were represented in gray. This technique allows the reader to perceive the general pattern of the whole sample, but focusing mainly on the line highlighted in blue.
+
+Another effective strategy is the use of small multiples (Figure \@ref(fig:lineplot3)), which segment the data and display them individually for easy interpretation. In Section \@ref(small-multi), we explore this technique in more detail.
+
+(ref:lineplot3) The panel chart approach divides a dense line chart into several separate components. In this way, the clarity of each individual line is preserved. 
+
+```{r lineplot3, fig.width = 5.5*6/4.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:lineplot3)',fig.align='center'}
+
+library(tidyverse)
+library(lubridate)
+
+measles <- read.csv(
+  file = "data/Chapter05/measles_outbreaks.csv", 
+  header = TRUE
+  )
+m <- ggplot(measles, aes(x =year, y = confirmedCases))
+
+m + geom_line(aes(group = quarter), size = 1,
+              color = "#15617b") +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0,0),
+            name = "Confirmed cases") +
+    scale_x_continuous(breaks = c(1995,2000,2005,2011),
+    labels = c("1995", "2000", "2005", "2010-2011"),
+    name = "", expand = c(0,0)) +
+    facet_wrap(~quarter, scales = "free") +
+    coord_cartesian(xlim = c(1995,2014),
+    clip = "off", expand = FALSE) + 
+    theme_us_classic() +
+    theme(legend.position = "none",
+          strip.text = element_text(size = 14,
+          hjust = 0),
+          strip.background = element_rect(fill = "grey85",
+          colour = "grey85",linetype = 1, size = 0.25),
+          axis.title.y = element_text(hjust = 1),
+          axis.text.y = element_text(
+          margin = margin(0, 0, 0, 0)),
+          panel.spacing.x =  unit(0.5, "cm"),
+          plot.margin = margin(18, 6, 3, 1.5))
+
+```
+
+Figure \@ref(fig:lineplot3) is easier to perform, as it decomposes the line graph into several individual graphs. This has been achieved by using the `facet_wrap()` function and the argument `scales = “free” ` so that each graph has its own axis. \index{facet\_wrap function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+m <- ggplot(measles, aes(x =year, y = confirmedCases))
+
+m + geom_line(aes(group = quarter), size = 1,
+              color = "#15617b") +
+    scale_y_continuous(limits = c(0, 600),
+            expand = c(0,0),
+            name = "Confirmed cases") +
+    scale_x_continuous(breaks = c(1995,2000,2005,2011),
+    labels = c("1995", "2000", "2005", "2010-2011"),
+    name = "", expand = c(0,0)) +
+    facet_wrap(~quarter, scales = "free") +
+    coord_cartesian(xlim = c(1995,2014),
+    clip = "off", expand = FALSE) + 
+    theme_us_classic() +
+    theme(legend.position = "none",
+          strip.text = element_text(size = 14,
+          hjust = 0),
+          strip.background = element_rect(fill = "grey85",
+          colour = "grey85",linetype = 1, size = 0.25),
+          axis.title.y = element_text(hjust = 1),
+          axis.text.y = element_text(
+          margin = margin(0, 0, 0, 0)),
+          panel.spacing.x =  unit(0.5, "cm"),
+          plot.margin = margin(18, 6, 3, 1.5))
+
+```
+
+By dividing our multiple line plot into panels, it makes it easier for us to analyze each group. This action is useful when you have four or more data series.
+
+```{block2, line, type='rmdtip'}
+
+__Want to know more?__
+
+- If you want to change the date format, you must first install the **scales** package. Then, use the argument `labels = date_format()` inside the scale_x_date() function. Here are some examples of date styles: 
+  %Y: Years in the form of centuries (1998),
+  %y: Abbreviated years (98),
+  %b: Months abbreviated (Jan),
+  %b: Months represented in number (01),
+  %d: Day of the month in number (07).
+  
+- To highlight a line or a bar in your graph, you could rely on the **gghighlight** package. Its gghighlight() function can highlight almost any geometry.
+
+```
+
+## Slopegraph {#slopegraph}
+
+This type of graph was created by Edward Tufte and appears in his work *The Visual Display of Quantitative Information* (page 158). \index{Slopegraph} A slope graph is similar to a line graph, but with only two points on the x-axis. It is used to represent a “start” and “end” point in time, as well as to make comparisons between two categories. The slope of each line highlights both the magnitude and direction of change between variables.
+
+```{r paired, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= "Number of lianas in a series of one-hectare plots located in primary forests of the Amazon during the years 1997-99 and 2012.",fig.align='center'}
+
+library(tidyverse)
+lianas <- read.csv(
+              file = "data/Chapter05/Lianas.csv", 
+              header = TRUE,  sep=",")
+early <- data.frame(Site = lianas$Site, 
+                  Abundance = lianas$LianaAbundanceEarly,
+                  time = "1997-99")
+
+later <- data.frame(Site = lianas$Site, 
+                  Abundance = lianas$LianaAbundance2012,
+                  time = "2012")
+
+lianas2 <- rbind(early, later)
+
+lianas2$time <- factor(lianas2$time, 
+                       levels = c("1997-99", "2012"))
+l = ggplot(lianas2, aes(x = time, y = Abundance )) 
+
+l + geom_line(aes(group = Site),
+              color = "gray60", size = 1.2) +
+    geom_point(size = 4, color = "dodgerblue3",
+               alpha = 0.5) +
+    labs(x = NULL, 
+         y = "Abundance (stems/ha)") + 
+    scale_y_continuous(limits = c(200,700)) +
+    scale_x_discrete(position = "top") +
+    theme_us_classic() +
+    theme(axis.line.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.margin = margin(14, 7, 3, 1.5))
+
+```
+
+In the following, we will use this visualization to illustrate the abundance of lianas (climbing woody vines) in 36 one-hectare plots located in primary forests in Amazonia. [@Laurance5], conducted two studies: the first between 1997 and 1999, and the second in 2012 (Figure \@ref(fig:paired)).
+
+```{r, error=FALSE, warning=FALSE, message=FALSE}
+
+lianas <- read.csv(
+              file = "data/Chapter05/Lianas.csv", 
+              header = TRUE,  sep=",")
+
+head(lianas, 4)
+
+```
+
+Before generating the graph, it is necessary to make an adjustment to the data. First, we will create a separate data set for the 1997-99 and 2012 surveys, making sure that the variables have identical names. Then, we will combine these sets using the `rbind()` function, and finally, we will arrange the variables so that the “1997-99” data is presented first on the graph.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+early <- data.frame(Site = lianas$Site, 
+                  Abundance = lianas$LianaAbundanceEarly,
+                  time = "1997-99")
+
+later <- data.frame(Site = lianas$Site, 
+                  Abundance = lianas$LianaAbundance2012,
+                  time = "2012")
+
+lianas2 <- rbind(early, later)
+
+lianas2$time <- factor(lianas2$time, 
+                       levels = c("1997-99", "2012"))
+
+```
+
+With our variables sorted, we can now make the following (Figure \@ref(fig:paired)). 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+l <- ggplot(lianas2, aes(x = time, y = Abundance )) 
+```
+
+To create our graph, we first drew the lines with the `geom_line()` function to connect the points of both groups. Then the `geom_point()` function was used to draw the points. Finally, the x-axis labels were placed at the top with the argument `position = “top”`.  
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+l + geom_line(aes(group = Site),
+              color = "gray60", size = 1.2) +
+    geom_point(size = 4, color = "dodgerblue3",
+               alpha = 0.5) +
+    labs(x = NULL, 
+         y = "Abundance (stems/ha)") + 
+    scale_y_continuous(limits = c(200,700)) +
+    scale_x_discrete(position = "top") +
+    theme_us_classic() +
+    theme(axis.line.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+```
+
+This study clearly shows that the abundance of lianas in primary tropical forests increased during the periods analyzed, suggesting a possible response to accelerating forest dynamics and increasing CO2 concentrations.
+
+Below we will indicate when to avoid this type of plot: 
+
+- If you have a large number of data points, you could end up with numerous crisscrossing lines, making the visualization difficult to interpret.
+
+- Slopegraph are not ideal for categorical data when there is no genuine relationship between the selected categories.
+
+- The message of a slopegraph can be confusing when the data do not present clear trends over time or between categories.
+
+You can select different line styles (Figure \@ref(fig:line-type)). The most common and widely used are solid, dashed and dotted. The choice of a linetype can be made with the scale_linetype_manual() function.
+
+(ref:line-type) Different types of lines
+
+```{r line-type,fig.width = 5.5*6/3, fig.asp = 0.5, dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:line-type)',fig.align='center'}
+
+library(tidyverse)
+
+lines <- data.frame(
+  linetype = factor(
+    0:6,
+    labels = c("blank","solid", "dashed",
+   "dotted","dotdash","longdash", "twodash")
+  ))
+
+ggplot(lines) +
+  geom_hline(aes(linetype = linetype, yintercept = 0), linewidth = 2) +
+  scale_linetype_identity() +
+  facet_grid(linetype ~ ., switch = "y") +
+  theme_void(20)
+
+```
+
+## In conclusion 
+
+The scatter plot is an effective tool for visualizing the relationship between two quantitative variables. However, if we wish to represent the relationship between more than two variables, we can opt for a scatterplot matrix or a correlation chart. Likewise, the slope plot is useful when multiple measurements need to be compared simultaneously. On the other hand, the volcano plot is a variation of the scatter plot that allows visualization of changes in the expression of multiple genes between two samples. 
+
+When working with a high-dimensional data set, i.e. with numerous correlated variables, it is best to apply a dimension reduction technique that preserves as much information as possible. One of the methods discussed in this chapter for this purpose is Principal Component Analysis (PCA).
+
+On the other hand, line graphs are widely used to represent continuous data, especially those showing changes over time. However, if the graph contains too many lines, it is advisable to employ strategies such as highlighting certain key lines or dividing the graph into small panels to improve its interpretation.
+
+## To practice!
+
+### Exercise 1
+
+
+Use the data on red wine and white wine. Combining these two data sets, you must select four numerical variables, according to your interest. Among these four variables, you will observe whether there is a relationship between them, therefore, it is suggested to create a scatter plot matrix ([UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/186/wine+quality)).
+
+```{r, error=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+
+w1 <- read.csv2("data/Chapter05/winequality-white.csv", 
+        header = TRUE)
+
+w2 <- read.csv2("data/Chapter05/winequality-red.csv", 
+        header = TRUE)
+
+w1['type'] <- 'White wine'
+w2['type'] <- 'Red wine'
+
+wines <- rbind(w1, w2)
+
+```
+
+
+### Exercise 2
+
+Perform a correlation heat map of gene expression changes in the whole transcriptome between the genetic backgrounds of ALS. In this dataset you can also perform **volcano plot** [@Ziff2023].
+
+```{r, error=FALSE, message=FALSE, warning=FALSE}
+
+library(readxl)
+
+volcanplot <- read_xlsx(path = 
+        "data/Chapter05/MOESM6_ESM.xlsx",
+       col_names = TRUE, sheet = "Fig 3A")
+
+correlation2 <- read_xlsx(path = 
+        "data/Chapter05/MOESM6_ESM.xlsx",
+       col_names = TRUE, sheet = "Fig 3F")
+
+```

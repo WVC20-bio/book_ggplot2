@@ -1,0 +1,678 @@
+# Use of color palette {#color}
+
+_Color_ is one of the most powerful tools in data visualization and therefore deserves special attention in this chapter. Before delving into its usefulness, color can be described by three main attributes: hue, saturation and lightness. **Hue** (H) corresponds to the type of color; for example, in Figure \@ref(fig:color), grade 240 represents blue. **Saturation** (S) indicates the intensity of the color, varying from a completely gray tone (0%) to a fully saturated color (100%). Finally, **lightness** (L) describes the brightness of the color, with a scale ranging from black (0%) to white (100%).  
+
+Color can become a **double-edged** sword if not used correctly. A common example is adding color to your graphics just to make them look flashy or vibrant. If that is your perspective on the use of color, you are losing control over this powerful tool.
+
+(ref:color) Example of an interactive color picker. It shows us the three main color attributes which are hue-saturation-luminosity. Source: https://www.w3schools.com/colors/colors_hsl.asp. 
+
+```{r color, echo = FALSE, fig.align='center', out.width='75%', fig.cap= '(ref:color)'}
+knitr::include_graphics(rep("images/color_hsl.png"))
+```
+
+## Color to distinguish between groups {#qualitative-color} 
+
+The selection of colors varies according to the type of variable being worked on, whether categorical or continuous. In the case of categorical variables, colors with different shades are used to clearly differentiate the groups. This set of colors is called *qualitative colors*, which are distinguished by the fact that they do not establish a hierarchical order or highlight one color over the others. Figure \@ref(fig:qual) shows examples of qualitative color scales and one of the most widely used scales for coloring large areas (maps) is [ColorBrewer](https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3).
+
+(ref:qual) Qualitative color scale. The ggplot2 tone scale is the default of the ggplot2 package [@Wickham2016]. The Okabe-Ito color palette, as suggested by @Okabe20. The ColorBrewer Set2 palette is part of the color collections developed by the ColorBrewer project [@bre20], a widely used tool for applying colors to maps. The Harmonic palette [@ros20] belongs to the group of palettes proposed by Ihaka.
+
+```{r qual, fig.width=5*6/4.2, fig.asp=3*.14, dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:qual)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        colorspace,
+        colorblindr,
+        cowplot)
+
+p1 <- gg_color_swatches(7) + 
+  scale_fill_hue() + ggtitle("Ggplot2 hue") +
+  theme(plot.margin = margin(7, 1.5, 7, 1.5),
+        plot.title = element_text(
+                    face = "bold"))
+
+p2 <- gg_color_swatches(7) + 
+  scale_fill_brewer(type = "qual", palette = "Set2") + 
+  ggtitle("ColorBrewer Set2") +
+  theme(plot.margin = margin(7, 1.5, 7, 1.5),
+        plot.title = element_text(
+                    face = "bold"))
+
+p3 <- gg_color_swatches(7) + 
+  scale_fill_discrete_qualitative(palette = "Harmonic") + 
+  ggtitle("Harmonic") +
+  theme(plot.margin = margin(7, 1.5, 7, 1.5),
+        plot.title = element_text(
+                    face = "bold"))
+
+p4 <- gg_color_swatches(7) + 
+  scale_fill_OkabeIto() + 
+  ggtitle("Okabe-Ito") +
+  theme(plot.margin = margin(7, 1.5, 7, 1.5),
+        plot.title = element_text(
+                    face = "bold"))
+
+plot_grid(p1, p4,p2,p3, ncol = 1,
+          scale = c(0.9, 0.9))
+
+
+```
+
+When using the ColorBrewer color palette, it is important to consider whether it will be applied to dots or areas. For dots or lines, bright colors such as “Dark2” and “Set1” are ideal. On the other hand, for areas, soft tones such as “Set2” and “Pastel2” are more appropriate, as they do not generate such an intense visual impact.
+
+An example using these color scales is shown below. Figure \@ref(fig:microbiome) shows the relative abundance of bacterial phyla in *healthy* patients, with *C. difficile* diarrhea and with non *C. difficile* diarrhea. The plot shows the relative abundance at the phylum level, assigning a different color to each one. However, it is complicated to distinguish each phylum in the groups due to the wide range of colors, many of which are very similar. In Figure \@ref(fig:microbiome), the excessive use of colors has not been moderately managed, creating more distraction than clarity.
+
+(ref:microbiome) Stacked bar plot representing the relative abundance of bacterial phyla in the different groups.   Each phylum has a different color. It is difficult to compare the different phyla between groups, because there are too many colors. Data source: @Schubert2014. Note: To generate this graph we used the code published by Riffomonas Professional Development [@Schloss2023].
+
+```{r microbiome, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:microbiome)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        ggtext)
+
+microbiome_otu <- read.csv(
+                  "data/Chapter06/microbiome_otu",
+                  header=T, stringsAsFactors=FALSE)
+
+phylum_data <- microbiome_otu %>% 
+           filter(level == "phylum") %>%
+group_by(disease_stat,sample_id, taxon) %>%
+summarise(abun_rela = sum(abun_rela)) %>%
+group_by(disease_stat, taxon) %>%
+summarise(mean_abun_rela = 100*mean(abun_rela),
+          .groups = "drop") %>%
+mutate(disease_stat = factor(disease_stat,
+levels = c("NonDiarrhealControl",
+"DiarrhealControl", "Case"))) %>%
+mutate(taxon = str_replace(taxon,
+"(.*)_unclassified", "Unclassified *\\1*"))
+m = ggplot(phylum_data,aes(x=disease_stat, 
+                            y=mean_abun_rela, fill=taxon))
+m + geom_col() +
+  scale_fill_discrete(name=NULL) +
+  scale_x_discrete(breaks=c("NonDiarrhealControl",
+                            "DiarrhealControl",
+                            "Case"),
+  labels=c("Healthy",
+            "Diarrhea,<br>*C. difficile*<br>negative",
+            "Diarrhea,<br>*C. difficile*<br>positive")) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x=NULL,
+       y="Mean Relative Abundance (%)") +
+  theme_us_classic() +
+  theme(axis.text.x = element_markdown(),
+        legend.text = element_text(face = "italic"),
+        legend.key.size = unit(10, "pt"),
+        plot.margin = margin(14, 7, 3, 1.5))
+
+
+```
+
+To solve this problem, one option is to reduce the number of bacterial phyla and to color only the five different categories. There is a category that will be called “*Other*” and here you will find the bacterial phyla with a relative abundance of less than 3% (Figure \@ref(fig:microbiome2)). In conclusion, qualitative color scales are especially effective when it is necessary to differentiate between three and five different categories. 
+
+(ref:microbiome2) Stacked bar plot representing the relative abundance of bacterial phyla in the different groups. In contrast to Figure \@ref(fig:microbiome), the number of bacterial phyla has been reduced to five categories. Data source: @Schubert2014. Note: To generate this graph we used the code published by Riffomonas Professional Development [@Schloss2023].
+
+```{r microbiome2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:microbiome2)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        ggtext,
+        scales,
+        RColorBrewer)
+
+microbiome_otu <- read.csv(
+                  "data/Chapter06/microbiome_otu",
+                  header=T, stringsAsFactors=FALSE)
+phylum_data <- microbiome_otu %>% 
+           filter(level == "phylum") %>%
+group_by(disease_stat,sample_id, taxon) %>%
+summarise(abun_rela = sum(abun_rela)) %>%
+group_by(disease_stat, taxon) %>%
+summarise(mean_abun_rela = 100*mean(abun_rela),
+          .groups = "drop") %>%
+mutate(disease_stat = factor(disease_stat,
+levels = c("NonDiarrhealControl",
+"DiarrhealControl", "Case"))) %>%
+mutate(taxon = str_replace(taxon,
+"(.*)_unclassified", "Unclassified *\\1*"))
+pool_tax = phylum_data %>%
+           group_by(taxon) %>%
+           summarize(pool = max(mean_abun_rela) < 3,
+            mean = mean(mean_abun_rela),
+            .groups="drop")
+
+m2 <- inner_join(phylum_data, pool_tax, by="taxon") %>%
+     mutate(taxon = if_else(pool, "Other", taxon)) %>%
+     group_by(disease_stat, taxon) %>%
+     summarize(mean_abun_rela = sum(mean_abun_rela),
+            mean = min(mean),
+            .groups="drop") %>%
+     mutate(taxon = factor(taxon),
+         taxon = fct_reorder(taxon, mean, .desc=TRUE),
+         taxon = fct_shift(taxon, n=1))
+m2 %>% 
+  ggplot(aes(x=disease_stat, 
+                           y=mean_abun_rela, fill=taxon)) +
+  geom_col(width = 0.7) +
+  scale_fill_discrete(name=NULL) +
+  scale_fill_manual(name=NULL,
+              breaks=c( "Bacteroidetes", 
+                        "Proteobacteria",
+                        "Verrucomicrobia",
+                        "Other",
+                        "Firmicutes"),
+              values = c(
+            "#56B4E9", "#E69F00", "#009E73",
+             "gray40", "#CC79A7"
+              )) +
+  scale_x_discrete(breaks=c("NonDiarrhealControl",
+                            "DiarrhealControl",
+                            "Case"),
+  labels=c("Healthy",
+            "Diarrhea,<br>*C. difficile*<br>negative",
+            "Diarrhea,<br>*C. difficile*<br>positive")) +
+  scale_y_continuous(expand = c(0, 0),
+                     labels = scales::percent_format(
+        accuracy = 1, scale = 1)) +
+  labs(x=NULL,
+       y="Mean Relative Abundance (%)") +
+  theme_us_classic() +
+  theme(axis.text.x = element_markdown(),
+        legend.text = element_text(face = "italic"),
+        legend.key.size = unit(10, "pt"),
+        plot.margin = margin(14, 7, 3, 1.5))
+
+
+```
+
+Qualitative colors have a special use as strategic tools to highlight a specific value or group in a visualization (Figure \@ref(fig:highlight)). It is advisable to use accent colors that stand out in the figure, while the base colors should be muted colors with shades of gray. In this context, we worked with a data set on heart disease from the Cleveland Clinic, collected by @detrano20 and available in the [UCI machine learning repository](https://archive.ics.uci.edu/dataset/45/heart+disease). The Figure \@ref(fig:highlight) presents a scatter plot exploring the relationship between age and peak heart rate in patients with and without heart disease. In addition, the severity of chest pain is considered, highlighting those patients with asymptomatic pain. This approach reveals that asymptomatic chest pain was mainly manifested in people with heart disease, suggesting that most of these patients were in early stages of the disease and did not experience chest pain.
+
+
+(ref:highlight) Peak heart rate with different types of chest pain in patients of different ages. Asymptomatic chest pain occurs mainly in people with heart disease, suggesting that most of these patients are in the early stages of the disease. The black dashed line indicates the average maximum heart rate with respect to age and the black solid line indicates the predicted maximum heart rate as a function of age, in addition with its error band at the 95\% confidence level. Image source: @aruna20. Data source: @detrano20.
+
+(ref:highlight-short) Peak heart rate by age and chest pain type.
+
+```{r highlight, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:highlight)',fig.scap='(ref:highlight-short)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse
+  )
+
+# Data 
+df <-  read.table(
+               "data/Chapter09/processed.cleveland.data", 
+                header=FALSE, sep=",") 
+
+col<-c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", "thalach", "exang", "oldpeak", "slope", "ca", "thal", "num")
+colnames(df)<-col 
+
+df <- subset(df, ca != '?' & thal != '?')
+
+df$target <- 0
+df$target[df$num > 0] <- 1
+
+df$age_group <- '90+'
+df$age_group[df$age >=0 & df$age<=17] <- '1-17'
+df$age_group[df$age >=18 & df$age<=30] <- '18-30'
+df$age_group[df$age >=31 & df$age<=40] <- '31-40'
+df$age_group[df$age >=41 & df$age<=50] <- '41-50'
+df$age_group[df$age >=51 & df$age<=60] <- '51-60'
+df$age_group[df$age >=61 & df$age<=70] <- '61-70'
+df$age_group[df$age >=71 & df$age<=80] <- '71-80'
+df$age_group[df$age >=81 & df$age<=90] <- '81-90'
+
+# Plot
+
+df2 <- df %>% mutate(objective = ifelse(target == 0, "Normal", "Heart Disease"))
+
+ggplot(df2, aes(x = age, y = thalach , color=factor(cp))) + 
+geom_point(aes(shape = factor(cp), fill =factor(cp) ), size = 3)+
+scale_shape_manual(values = 21:25, 
+                   labels = c("Asymptomatic", "Non-anginal pain","Typical angina", "Atypical angina"), 
+      limits = factor(c(4,3,1,2))) + 
+facet_wrap(~factor(objective), ncol=1) + 
+geom_abline(slope = -1, intercept = 220, 
+      linetype = "dashed", color = "black") + 
+geom_smooth(method = "lm", formula = y ~ x, se = FALSE, 
+           level = 0.95, color = "black", linetype = "solid") +
+labs(y = "Maximum heart rate (bpm)", x = "Age (years)", 
+     color="Chest pain type", 
+     shape = "Chest pain type",
+     fill = "Chest pain type") +
+scale_color_manual(values = c("#56B4E9",rep("#808080", 4)),
+      labels = c("Asymptomatic", "Non-anginal pain","Typical angina", "Atypical angina"), 
+      limits = factor(c(4,3,1,2))) +
+scale_fill_manual(values = c("#56B4E9D0",rep("#80808080", 4)),
+      labels = c("Asymptomatic", "Non-anginal pain","Typical angina", "Atypical angina"), 
+      limits = factor(c(4,3,1,2))) +
+theme_us_classic() + 
+theme(legend.key = element_blank(), 
+      strip.text = element_text(size = 14,
+      hjust = 0),
+      strip.background  = element_rect(
+        fill = "grey85", colour = "grey85",
+        linetype = 1, size = 0.25))
+
+
+```
+
+
+```{block2, color1 , type='rmdtip'}
+
+__Want to know more?__
+
+- The `palette.colors()` function, new in R 4.0.0, provides a way to access several other predefined palettes, estas paletas son de colores cualitativos. Also, by default `palette.colors()` returns the "Okabe-Ito". 
+  
+- To see all the color palettes of ColorBrewer, use the color function: `RColorBrewer::display.brewer.all()`.
+
+- There are websites that act as color blindness simulators: Color Oracle (https://colororacle.org/index.html), Vischeck (https://www.vischeck.com/). 
+
+```
+
+
+## Color to estimate values {#color-values}
+
+In continuous variables, color scales are used to represent values, and these are called continuous colors. When the color scale shows a continuous and ordered range, from the lowest to the highest, these are *sequential color scales*. A distinctive feature of these scales is that low values are represented by light tones, while high values are associated with dark tones.
+
+Figure \@ref(fig:seq) presents sequential and *multi-tone color scales*. Sequential scales use a single hue, such as a transition from light purple to dark purple. On the other hand, multi-tone scales offer greater chromatic variety, increasing the contrast between colors, such as a progression from dark blue to light yellow. However, it is important to be cautious with these types of scales, as the differences in shades can lead to misinterpretations by the reader.
+
+(ref:seq) Sequential and multi-hue color scales. "Burg" and "Gray" color scales are monochromatic scales. "Rainbow" and "Cividis" color scales are multi-hue scales.
+
+```{r seq, fig.width=5*6/4.2, fig.asp=3*.14, dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:seq)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        colorblindr,
+        colorspace,
+        viridis,
+        cowplot)
+
+
+Burg <- c("white","#ffc6c4", "#ee919b",
+          "#cc607d", "#9e3963",
+          "#672044")
+
+p1 <- gg_color_gradient(
+      plot_margin = margin(17.5, 1, 0, 1),
+      ymargin = 0.05) + 
+      scale_fill_gradientn(
+      colours = Burg) + 
+      ggtitle("Burg") +
+      theme(plot.title = element_text(
+                    face = "bold"))
+
+p2 <- gg_color_gradient(
+      plot_margin = margin(17.5, 1, 0, 1),
+      ymargin = 0.05) + 
+      scale_fill_gradientn(colours = c( 
+                  "white", "gray", "black")) +
+      ggtitle("Grays") +
+      theme(plot.title = element_text(
+                    face = "bold"))
+
+
+p3 <- gg_color_gradient(
+      plot_margin = margin(17.5, 1, 0, 1),
+      ymargin = 0.05) + 
+      scale_fill_gradientn(colors = rainbow(10)) + 
+      ggtitle("Rainbow")  + 
+      theme(plot.title = element_text(
+            face = "bold"))
+
+p4 <- gg_color_gradient(
+      plot_margin = margin(17.5, 1, 0, 1),
+      ymargin = 0.05) + 
+  scale_fill_viridis_c(option = "cividis") + 
+  ggtitle("Cividis") +
+  theme(plot.title = element_text(
+        face = "bold"))
+
+plot_grid(p1, p2,p3,p4, ncol = 1)
+
+
+```
+
+
+As an example of the use of sequential color scales, we will continue using our data on the average relative abundance of bacterial phyla in different groups. In Figure \@ref(fig:microbiome2), it was decided to reduce the number of bacterial phyla by assigning a different color to each one. However, it would be more appropriate to represent all bacterial phyla and use a sequential color scale to reflect their relative abundance. In other words, we will make a heat map (Figure \@ref(fig:microbiome3)). 
+
+(ref:microbiome3) Heat map representing the relative abundance of bacterial phyla in the different groups. The bacterial phyla with the highest abundance are *Proteobacteria*, *Firmicutes* and *Bacteroidetes*. Variable saturation of a single color is used and abundance values were placed directly on the plot. Data source: @Schubert2014. Note: To generate this graph we used the code published by Riffomonas Professional Development [@Schloss2023].
+
+```{r microbiome3, fig.width = 5.5*6/4.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:microbiome3)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        ggtext, 
+        colorspace)
+
+microbiome_otu <- read.csv(
+                  "data/Chapter06/microbiome_otu",
+                  header=T, stringsAsFactors=FALSE)
+
+phylum_data <- microbiome_otu %>% 
+           filter(level == "phylum") %>%
+group_by(disease_stat,sample_id, taxon) %>%
+summarise(abun_rela = sum(abun_rela)) %>%
+group_by(disease_stat, taxon) %>%
+summarise(mean_abun_rela = 100*mean(abun_rela),
+          .groups = "drop") %>%
+mutate(disease_stat = factor(disease_stat,
+levels = c("NonDiarrhealControl",
+"DiarrhealControl", "Case"))) %>%
+mutate(taxon = str_replace(taxon,
+"(.*)_unclassified", "Unclassified *\\1*"))
+m = ggplot(phylum_data,aes(x=disease_stat, 
+          y=mean_abun_rela, fill=taxon))
+
+
+Burg <- c("white","#ffc6c4", "#ee919b",
+          "#cc607d", "#9e3963",
+          "#672044")
+
+ggplot(phylum_data, aes(x = disease_stat,
+   fill = mean_abun_rela, y = taxon)) +
+   geom_tile() + 
+   geom_text(aes(label = format(
+   round(mean_abun_rela, 1), nsmall = 1)),
+   size = 5) + 
+   labs(x = NULL, y = NULL) + 
+   scale_fill_gradientn(
+      name = "Mean<br>relative<br>abundance (%)<br>",
+      colours = Burg) + 
+   scale_x_discrete(breaks=c("NonDiarrhealControl",
+                             "DiarrhealControl",
+                              "Case"),
+  labels=c("Healthy",
+      "Diarrhea,<br>*C. difficile*<br>negative",
+       "Diarrhea,<br>*C. difficile*<br>positive"),
+  position = "top") +
+  theme_bw(base_size = 14) + 
+  theme(legend.title = element_markdown(size = 14),
+        legend.text = element_text(size = 14),
+        axis.text.x.top = element_markdown(size = 14,
+        face = "bold",color = "black"),
+         axis.text = element_text(size = 14),
+        axis.text.y = element_text(face = "italic"),
+        axis.line = element_blank(),
+        axis.line.y.right = element_line(size = 0.8),
+        axis.ticks = element_blank(),
+        panel.grid.minor = element_blank(), 
+       panel.grid.major.x = element_blank(), 
+      panel.background = element_blank(),
+      panel.grid.major.y = element_blank()) +
+ guides(fill = guide_colourbar(barwidth = 0.5,
+ barheight = 12)) +
+ coord_fixed(ratio = 0.3)
+   
+```
+
+There are color scales whose use requires caution, as they can be misleading. A well-known example is the popular rainbow color scale (**ROY-G-BIV**). The ROY-G-BIVcolor scale (Figure \@ref(fig:seq)) consists of a sequence of shades that are typically associated with the colors of the rainbow: red, orange, yellow, green, blue, indigo and violet. Although this color scale is visually attractive, its order is not intuitive. In addition, there are inconsistencies: there are areas where the colors change gradually and others where the change is abrupt, which creates a non-monotonic transition and can distort the interpretation of the data (Figure \@ref(fig:rainbow)). Also, in color maps, the human brain tends to perceive brighter shades as peaks and darker shades as valleys. On the ROY-G-BIV scale, yellow is the brightest color and is often interpreted as a peak on a map, although in reality yellow is somewhere in the middle of the scale [@mas1;@mas2;@claus5]. 
+
+Despite its limitations, the rainbow color scale is still widely used in various scientific fields, such as biology. In this discipline, the color gradient is used to represent phenomena such as climate change, ocean temperature, brain activity or the diagnosis of heart disease, among others. Its widespread use may be due to the fact that many software programs, such as [MatLab](https://blogs.mathworks.com/steve/2014/10/13/a-new-colormap-for-matlab-part-1-introduction/), offered this color palette by default. 
+
+It is important to note that a significant proportion of readers have color vision deficiencies (CVD) or **color blindness**. Approximately 8% of males and 0.5 % of females are color blind. Although these percentages are relatively low, they may be considerably higher in populations of European descent. Color blind individuals have a reduced or completely absent photoreceptor group compared to the three photoreceptor groups (short, medium and long wavelengths) present in a normal human eye [@mas1;@mas2;@Crameri2020].
+
+(ref:rainbow) Image showing different color scales applied to the Center for Statistical Applications in Forensic Evidence CSAFE logo, including grayscale, rainbow color scale, and the Cividis and Viridis scales.
+
+```{r rainbow, fig.width = 5.5*6/4.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:rainbow)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        x3ptools,
+        viridis,
+        cowplot)
+
+
+logo <- read_x3p(system.file("csafe-logo.x3p", package = "x3ptools"))
+
+
+logo_df <- x3p_to_df(logo)
+
+p1 <- ggplot(data = logo_df, aes(x = x, y = y, color = value)) + 
+    geom_point() + 
+    scale_color_gradientn(colours = c( 
+     "white", "gray", "black"),
+    guide = guide_colorbar(
+    ticks = FALSE)) + 
+     ggtitle("Grayscale") + 
+     theme_void() + 
+     theme(legend.text = element_blank(),
+           legend.title = element_blank(),
+           legend.position = c(0.43, 1),
+          legend.direction = "horizontal",
+           plot.title = element_text(size = 14),
+          legend.key = element_blank())+ 
+     coord_cartesian(ylim = c(2e-08,3e-04))
+
+
+p2 <- ggplot(data = logo_df, aes(x = x, y = y, color = value)) + 
+    geom_point() + 
+    scale_color_gradientn(colors = rainbow(10),
+    guide = guide_colorbar(
+    ticks = FALSE)) + 
+     ggtitle("Rainbow") + 
+     theme_void() + 
+     theme(legend.text = element_blank(),
+           legend.title = element_blank(),
+           legend.position = c(0.4, 1),
+          legend.direction = "horizontal",
+           plot.title = element_text(size = 14),
+          legend.key = element_blank()) + 
+     coord_cartesian(ylim = c(2e-08,3e-04))
+    
+
+p3 <- ggplot(data = logo_df, aes(x = x, y = y, color = value)) + 
+    geom_point() + 
+    scale_color_viridis_c(option = "cividis",
+    guide = guide_colorbar(
+    ticks = FALSE)) + 
+     ggtitle("Cividis") + 
+     theme_void() + 
+     theme(legend.text = element_blank(),
+           legend.title = element_blank(),
+           legend.position = c(0.34, 1),
+          legend.direction = "horizontal",
+           plot.title = element_text(size = 14),
+          legend.key = element_blank()) + 
+    coord_cartesian(ylim = c(2e-08,3e-04))
+
+p4 <- ggplot(data = logo_df, aes(x = x, y = y, color = value)) + 
+    geom_point() + 
+    scale_color_viridis(option = "viridis",
+    guide = guide_colorbar(
+    ticks = FALSE)) + 
+     ggtitle("Viridis") + 
+     theme_void() + 
+     theme(legend.text = element_blank(),
+           legend.title = element_blank(),
+           legend.position = c(0.34, 1),
+          legend.direction = "horizontal",
+           plot.title = element_text(size = 14),
+          legend.key = element_blank()) + 
+    coord_cartesian(ylim = c(2e-08,3e-04))
+
+
+plot_grid(p1, p2,p3,p4, ncol = 2, nrow = 2)
+   
+```
+
+There are different types of color blindness, the most common being deuteranopia or deuteranomaly, which affects the medium wavelength (M) photoreceptors, causing deficiency in the perception of red and green colors. Other types include protanopia or protanomaly, which affects the long-wavelength (L) photoreceptors, reducing red color sensitivity, and tritanopia or tritanomaly, which affects the short-wavelength (S) photoreceptors, decreasing blue color perception [@claus5;@Crameri2020]. 
+
+One way to avoid problems in data visualization is to use grayscales (Figure \@ref(fig:rainbow)). These scales eliminate the difficulties related to color perception and can provide linear luminance. However, their dynamic range is limited, as humans can only distinguish up to thirty shades of gray. To overcome this limitation, researchers have developed palettes with continuous gradients that range from dark to light shades and are suitable for color-blind people. Examples of these palettes include Cividis [@nuñez5] and Viridis [@garnier5].
+
+
+(ref:div) Divergent color scales are composed of two sequential scales that are separated from a shared color, usually a light shade. Among these, the PiYG scale is an excellent choice, as it is suitable for all forms of color vision deficiency.
+
+```{r div, fig.width=5*6/4.2, fig.asp=3*.14, dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:div)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+        tidyverse,
+        colorblindr,
+        colorspace,
+        cowplot)
+
+
+p1 <- gg_color_swatches(7) + 
+      scale_fill_discrete_diverging("Blue-Red 2")+ 
+      ggtitle("Blue-Red 2") + 
+      theme(plot.margin = margin(7, 1.5, 7, 1.5), 
+            plot.title = element_text(
+            face = "bold"))
+
+
+p2 <- gg_color_swatches(7) + 
+      scale_fill_brewer(type = "div", palette = "PiYG") + 
+      ggtitle("PiYG") + 
+      theme(plot.margin = margin(7, 1.5, 7, 1.5), 
+            plot.title = element_text(
+            face = "bold"))
+
+p3 <- gg_color_swatches(7) + 
+      scale_fill_brewer(type = "div", palette = "PRGn") + 
+      ggtitle("PRGn") + 
+      theme(plot.margin = margin(7, 1.5, 7, 1.5), 
+            plot.title = element_text(
+            face = "bold"))
+
+p4 <- gg_color_swatches(7) + 
+      scale_fill_brewer(type = "div", palette = "BrBG") + 
+      ggtitle("BrBG") + 
+      theme(plot.margin = margin(7, 1.5, 7, 1.5), 
+            plot.title = element_text(
+            face = "bold"))
+
+plot_grid(p1, p2,p3,p4, ncol = 1)
+
+```
+
+Occasionally, data sets have a significant central value, such as a midpoint of zero or other relevant number, along with positive and negative values. In these cases, *divergent color scales* are used, which combine two sequential scales of different colors and converge to a shared color (light color) representing the central value (Figure \@ref(fig:div)).
+
+Next, we will show an example by applying a divergent color scale. In Figure \@ref(fig:heatmap4) we have a heatmap showing the transcriptomic changes in four primary human airway smooth muscle (ASM) cell lines that were treated with dexamethasone [@Himes2014]. In this heatmap, a division into rows and columns is observed, where the rows correspond to gene names and the columns to sample names.
+
+(ref:heatmap4) Heatmap showing the expression of 20 genes in four human airway smooth muscle cell lines treated with dexamethasone. Heat map grouped by a tree, to show hierarchical links between rows and columns.
+
+```{r heatmap4, fig.width = 5.5*6/4.2, fig.asp = 0.7, out.width='120%',dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:heatmap4)',fig.align='center'}
+
+airway <-read.csv("data/Chapter07/RNAseq_mat_top20.csv",
+              header=TRUE,row.names=1,
+              check.names=FALSE)
+library(pacman)
+pacman::p_load(
+  ComplexHeatmap,
+  circlize,
+  seriation
+  )
+
+at <-data.frame(sample=as.character(colnames(airway)),dex="Treatment")%>%
+                column_to_rownames("sample")
+at$dex <-ifelse(rownames(at) %in% c("508","512","516","520"),
+                "untrt","trt")
+
+colours <- list('dex' = c('untrt' = 'black', 'trt' = '#8d9690'))
+
+col_att <- HeatmapAnnotation(
+  df = at,
+  which = 'col',
+  col = colours,
+  show_annotation_name = FALSE,
+  show_legend = FALSE)
+
+col_map = colorRamp2(seq(min(airway), max(airway), length = 4), 
+           c("#018571", "#f5f5f5","#dfc27d", "#a6611a"))
+
+hmap2 <- ComplexHeatmap::Heatmap(
+          airway,
+          name = "Expression",
+          col = col_map,
+          rect_gp = gpar(
+          col = "white", 
+          lwd = 2),
+          width = unit(100, "mm"),
+          top_annotation=col_att,
+          column_km = 2,
+          column_title = c("untrt", 
+                        "trt"))
+
+draw(hmap2, heatmap_legend_side="right",
+     merge_legend = TRUE)
+
+
+```
+
+
+```{block2, eye-dropper, type='rmdtip'}
+
+__Eye Dropper__
+
+It is a Chrome [extension](https://chromewebstore.google.com/detail/eye-dropper/hmdcmlfkchdmnmnmheododdhjedfccka?pli=1) that allows you to choose colors from any website, as well as save and organize your favorite colors. 
+
+```
+
+
+## In conclusion 
+
+Colors play a fundamental role in the creation of graphs, since their selection depends on the type of variable you are working with. In the case of categorical variables, it is advisable to use a palette of qualitative colors, while for continuous variables, it is best to opt for a palette of continuous colors, such as divergent or multitone scales. 
+
+
+## To practice!
+
+### Exercise 1
+
+We will work with a data set that presents a methodology to analyze and create graphs related to the distribution of environmental factors and forest attributes [@rodrigues2020]. We will reconstruct two plots, one on elevation and one on pH for each plot. In both cases, heat maps will be generated using the `geom_raster()` function and incorporating color scales that reflect what has been learned in this chapter. It is important to keep in mind that a percentage of readers may be color blind, so appropriate color palettes should be selected.
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse)
+
+data <- read.table(
+               "data/Chapter09/atributo.txt", 
+                header=TRUE) %>%
+        rename(elevation = "elevação",
+               height = "altura")
+
+Burg <- c("white","#ffc6c4", "#ee919b",
+          "#cc607d", "#9e3963",
+          "#672044")  # Suggested color scale
+
+PuBu <- c("white","#d0d1e6","#a6bddb", "#74a9cf",
+          "#3690c0","#034e7b")  # Suggested color scale
+
+```
+
+
+### Exercise 2
+
+From the above data set [@rodrigues2020], we will reconstruct two plots with and without plot height interpolation. You will be supported with the functions `geom_raster()` and `geom_contour()`.  It is important to keep in mind that a percentage of readers may be color blind, so appropriate color palettes should be selected.
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse)
+
+data <- read.table(
+               "data/Chapter09/atributo.txt", 
+                header=TRUE) %>%
+        rename(elevation = "elevação",
+               height = "altura")
+
+BuPu  <- c("#edf8fb","#b3cde3", "#8c96c6",
+          "#8856a7", "#810f7c")  # Suggested color scale
+
+PuBu <- c("white", "#d0d1e6","#a6bddb", "#74a9cf",
+          "#3690c0","#034e7b")  # Suggested color scale
+
+```
+

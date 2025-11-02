@@ -1,0 +1,16 @@
+book_filename: bookdown
+clean: [packages.bib, bookdown.bbl]
+delete_merged_file: true
+rm_files: ["index.Rmd", "01-data-visualization.Rmd", "02-about_R.Rmd",
+           "03-Tidyverso.Rmd", "04-plot-whit-a-variable.Rmd", "05-plot-whit-two-variable.Rmd",
+            "06-whit-variables-continuous-discreet.Rmd", "07-other-graphs-and-tables.Rmd", "08-labels.Rmd",
+            "09-use_of_color.Rmd", "10-graphics_avoid.Rmd", "11-split_panel_figure.Rmd",
+            "12-appearance_plot.Rmd", "13-interactive_plot.Rmd", "14-export_plot.Rmd",
+             "15-more.Rmd", "16-references.Rmd"]
+language:
+  label:
+    fig: "Figure "
+    tab: "Table "
+  ui:
+    edit: "Edit"
+    chapter_name: "Chapter "

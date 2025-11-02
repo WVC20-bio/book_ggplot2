@@ -1,0 +1,50 @@
+---
+title: "Chapter6"
+author: "William Vilchez"
+date: "2025-10-08"
+output: html_document
+---
+
+
+
+## Exercise 2 
+
+```{r}
+
+library(tidyverse)
+
+finches <- read.csv(
+"D:/R_scripts/my_book/book_ggplot2/data/Chapter06/kenya_finches.csv", 
+  header = TRUE)
+
+ggplot(finches, aes(x= species, y = beaklength)) + 
+  geom_violin(aes(color = species, fill = species),
+      linewidth = 0.8, alpha = 0.2, adjust = 1.5) + 
+  geom_jitter (color = "gray2", fill = "gray70", shape = 21,
+      position=position_jitter(0), size = 2) + 
+  scale_color_manual(values = c("#56B4E9", "#E69F00","#009E73")) + 
+  scale_fill_manual(values = c("#56B4E9D0", "#E69F00D0","#009E73D0")) + 
+  annotate("text",x = 0.6, y = 8.5,
+      label = "Crimson-rumped \nwaxbill",
+      size = 13/.pt,color = "#56B4E9", hjust = 0) + 
+  annotate("text",x = 1.6, y = 9,
+      label = "Cutthroat \nfinch",
+      size = 13/.pt,color = "#E69F00", hjust = 0) +
+  annotate("text",x = 2, y = 11.3,
+      label = "White-browed \nsparrow weaver",
+      size = 13/.pt,color = "#009E73", hjust = 0) +
+  ylab("Beak length (mm)") + 
+  theme_us_classic() + 
+  theme(axis.text.x = element_blank(), 
+        axis.ticks.x = element_blank(), 
+        axis.title.x = element_blank(), 
+        legend.position = "none")
+
+
+```
+
+
+
+
+
+

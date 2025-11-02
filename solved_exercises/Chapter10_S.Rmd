@@ -1,0 +1,113 @@
+---
+title: "Chapter10"
+author: "William Vilchez Cruz"
+date: '2025-02-12'
+output: html_document
+---
+
+## Exercise 2
+
+```{r}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggtext
+  )
+
+lung_data <- read.csv("https://ourworldindata.org/grapher/lung-cancer-deaths-per-100000-by-sex-1950-2002.csv?v=1&csvType=full&useColumnShortNames=true", header = TRUE,  sep=",")
+
+lung_data <- lung_data %>% 
+             filter(Entity == "United States")  %>%
+              rename(
+              female =  age_standardized_death_rate_per_100_000_standard_population__sex_females__age_group_all_ages__cause_trachea__bronchus__lung_cancers__icd10_codes_c33_c34
+              ) %>%
+              rename (
+              male  = age_standardized_death_rate_per_100_000_standard_population__sex_males__age_group_all_ages__cause_trachea__bronchus__lung_cancers__icd10_codes_c33_c34   
+              )
+
+lung_data <- lung_data %>% 
+              pivot_longer(
+                cols = c("female", "male"),
+                names_to = "gender", values_to = "value"
+              )
+
+#lung_data %>% filter(Year == 2021)
+
+lung_label <- tribble(~label,~year,~value,~gender,
+                     "Women", 2021.5, 18.1,"female",
+                     "Men", 2021.5, 24.4,"male")
+
+ggplot(lung_data, 
+       aes(x = Year, y = value,
+           color = gender)) + 
+geom_line(aes(group = gender), size = 1) + 
+scale_y_continuous(
+                   breaks = seq(0,70,10)) + 
+scale_x_continuous(
+                   breaks = c(
+                   1950,1960,1970,1980,1990,2000,
+                   2010,2021
+                   ),
+                   labels = c(
+                   "1950","1960","1970","1980","1990","2000",
+                   "2010","2020-2021"  
+                   )) + 
+scale_color_manual(values = c(
+     "male" = "#0072B2",
+      "female" = "#D55E00"
+)) + 
+geom_text(data = lung_label,
+            mapping = aes(x = year, y = value,
+            color = gender, label = label),
+            hjust = 0, lineheight = 0.8, size = 5, 
+            size.unit = "pt", 
+            fontface = "bold",
+            show.legend = FALSE) + 
+labs(x = "", y = "",
+     title = "Lung cancer death rates, United States",
+     subtitle = "Reported annual death rate from lung, 
+        bronchus or trachea cancers per 100,000 people, 
+        based on the underlying cause listed on death certificates.",
+     caption = "Data source: WHO Mortality Database (2024)"
+     ) + 
+coord_cartesian(xlim = c(1950, 2021), ylim = c(0,75),
+                clip = "off", expand = FALSE) + 
+theme_us + 
+  theme(plot.title.position = "plot",
+        plot.title = element_text(size = 16),
+        legend.position = "none",
+         plot.subtitle = element_textbox_simple(
+           size = 12, lineheight = 1,
+          margin = margin(t = 2)),
+        plot.caption.position = "plot" ,
+        plot.caption = element_text(size = 10,
+                            color = "gray40",
+                            hjust = 0),
+        plot.margin = margin(t = 5, r = 70, b = 3, l = 5))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

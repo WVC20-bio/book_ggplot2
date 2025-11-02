@@ -1,0 +1,197 @@
+--- 
+title: "Visualizing Biological Data with ggplot2"
+author: "William G. Vilchez"
+date: "`r Sys.Date()`"
+documentclass: krantz
+fontsize: 12pt
+bibliography: [book.bib, packages.bib, bibliografia.bib]
+biblio-style: apalike
+nocite: '@*'
+csl: apa.csl
+link-citations: yes
+colorlinks: yes
+lot: no
+lof: no
+site: bookdown::bookdown_site
+description: "This is a book that aims to make multiple plots using ggplot2 and work with biological data."
+github-repo: yihui/bookdown-crc
+graphics: yes
+#cover-image: images/cover.jpg
+---
+
+# Preface {-}
+
+> *A data visualization can be beautiful, as long as that beauty contributes to a better understanding of the message, without being distracting or distorting*. 
+– Adaptation by Alberto Cairo, Functional Art, The: An introduction to information graphics and visualization
+
+
+During my years as a college student, I first encountered the R programming language, and decided to learn it on my own. In that self-taught process, I came across a book (mentioned in the Inspirational readings section) that completely transformed my way of thinking about how data should be visualized.
+
+In modern biology, data have multiplied and diversified at an accelerated rate, especially in the last two decades, as a result of advances in technology. Faced with this scenario, visualization becomes an essential tool to translate the complexity of biological data into understandable and accessible knowledge.
+
+However, there are few courses or materials that teach how to design truly clear, accurate and well-founded visualizations. With this need in mind, _Visualizing Biological Data with ggplot2_, a book conceived as a practical guide to manipulating and presenting various types of biological data using R and its powerful graphics package ggplot2, is born. This text is intended for a broad audience: undergraduate and graduate students, teachers, researchers, and anyone interested in communicating scientific information through effective graphics.
+
+Ggplot2 has been chosen as the main tool because of its flexibility and ability to create high quality visualizations. However, this book does not limit itself to displaying a variety of plots, but combines it with the principles of visualization resulting in customized, publication-ready figures.  And although the focus is on ggplot2, there is no harm if the reader decides to use another graphics package or software to reproduce or adapt the figures presented here.
+
+It is important to clarify that this is not a complete R manual, for that there are excellent books that cover that subject, but a direct introduction focused on the essential aspects that will allow the reader to manipulate data with ease and transform them into real visual pieces (figures, tables) that can communicate effectively in presentations, publications or classes.
+
+## How this book is organized? {-}
+
+This book is divided into four parts, each consisting of several chapters. Although the content has been organized sequentially, it is not strictly necessary to follow that order, as the chapters are largely independent of each other. However, if you are just starting out with R, I suggest you begin at the beginning of the book and work your way through to the end.
+
+Here's a tip that may help you: take your time. When you finish a chapter, review it again calmly; you may notice details, concepts, or steps that you overlooked on the first reading. Then, take a moment to practice the codes included, especially those in Part II, and try to analyze and interpret them for yourself.
+
+> Remember: it is better to go step by step and understand well than to move quickly and not understand.
+
+Part I: Covers the essential fundamentals of data visualization, along with a practical introduction to the R language.
+
++ Chapter \@ref(visualization): Provides an overview of what data visualization is, highlighting its importance and introducing some key tools for creating visual representations.
+
++ Chapter \@ref(about-R): Provides an introduction to the R language and the RStudio development environment. It explains how to install and load packages, how to import data, and how to generate reproducible documents using RMarkdown.
+
++ Chapter \@ref(tidyverse): Presents an introduction to the main packages in the tidyverse ecosystem, highlighting their usefulness in data management and transformation. It also addresses the concept of “graphics grammar” on which the ggplot2 package is built, explaining its logic and application in the creation of visualizations.
+
+Part II: This section will develop multiple visualizations using different types of data, including graphs, maps, and tables.
+
++ Chapter \@ref(continuous-x): Describes graphs that present a continuous X variable. 
+
++ Chapter \@ref(plots-more-continuous): Presents graphs that combine two or more continuous variables, allowing you to examine relationships and patterns between them.
+
++ Chapter \@ref(plots-x-discrete): Addresses visualizations that combine a discrete variable with a continuous variable, which makes it easier to compare specific groups or categories.
+
++ Chapter \@ref(other-plots): Introduces additional graphs not covered in previous chapters, many of which are generated using extensions of the ggplot2 package. It also explains how to structure and design tables with R.
+
+Part III: In this section, you customize the appearance of your visualizations with the aim of improving their clarity and effectiveness.
+
++ Chapter \@ref(labels): Recommendations are provided on the proper labeling of figures. 
+
++ Chapter \@ref(color): Offers guidelines for the correct use of color palettes.
+
++ Chapter \@ref(graphics-avoid): Examines examples of visualizations that should be avoided, explaining why certain graphics can be misleading or make it difficult to understand the data.
+
++ Chapter \@ref(panel-figures): Shows you how to create figures composed of panels.
+
++ Chapter \@ref(changes-design): Provides additional recommendations for designing your visualizations.
+
+Part IV: Includes additional topics that may be useful to you.
+
++ Chapter \@ref(interactive): Introduces the creation of interactive graphics using the *plotly* and *gganimate* packages.
+
++ Chapter \@ref(export-plot): Provides different ways to export your visualizations, analyzing the most common image formats and detailing their characteristics, advantages, and limitations according to the context of use.
+
+Appendix \@ref(more): Provides additional resources related to the R language.
+
+Appendix \@ref(table-markdown): Describes how to build tables using extended Markdown syntax.
+
+Appendix \@ref(tool): Provides information on tools that aid in the creation of scientific illustrations.
+
+Appendix \@ref(author): Provides a brief biographical sketch of the author.
+
+At the end of each chapter from Part II, there are practical exercises to help consolidate the knowledge acquired. These exercises are not categorized by level of difficulty, which encourages readers to apply all the skills, criteria, and strategies they have learned to solve them.  However, if you have any questions, the answers to one of the two exercises are available at https://github.com/WVC20-bio/visualizing_ggplot2_book.
+
+## Data we will use {-}
+
+Throughout the book, biological datasets obtained from both real research and freely accessible online databases will be used. This will allow readers to explore a variety of topics that may be relevant to their field of interest, while also finding inspiration and practical examples for graphically representing data from their own research. The data used in the chapters are available at https://github.com/WVC20-bio/visualizing_ggplot2_book.
+
+## Packages used in the book
+
+Throughout this book, we will mainly use the **ggplot2** package. However, there are other extensions to this package that allow you to expand its functionality, improve the presentation of graphs, or facilitate the creation of specific visualizations that cannot be done directly with **ggplot2**. Next, we will proceed to install the following packages:
+
+```{r, echo=TRUE, warning=FALSE, error=FALSE,eval=FALSE}
+
+book_packages <- c(
+"ggplot2","tidyverse","pacman", "devtools", "readxl","ggrepel", 
+"ggtext", "scales", "RColorBrewer", "glue", "ggmosaic","cowplot", 
+"ggbeeswarm", "GGally", "chron","naniar", "ggridges", "survival", 
+"survminer", "forestplot", "ggtree", "ape", "treeio", "UpSetR", 
+"ComplexHeatmap", "circlize", "seriation", "GOplot", "sf", 
+"rnaturalearth", "rnaturalearthdata", "colorspace", "knitr", 
+"kableExtra", "modelsummary", "rstatix", "palmerpenguins", 
+"ggpattern", "grid", "aplot","extrafont", "plotly", "htmlwidgets", 
+"gganimate", "lubridate", "ggimage")
+
+
+install.packages(book_packages, repos = "http://cran.rstudio.com")
+
+```
+
+
+After executing the command, the packages will begin to install. The process may take a few minutes, so I suggest you pour yourself a cup of tea or coffee while you wait for everything to be ready.
+
+## The graphic theme adopted in this book
+
+All graphics presented in this book have a custom theme as their basis. This theme, called `theme_us_classic()`, helps the data stand out more clearly.
+
+```{r,warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+theme_us_classic <- function(base_size  = 14, 
+                     base_family  = "") {
+  color = "grey50"
+  line_size = 0.5
+  ggplot2::theme_classic(base_size = base_size, 
+    base_family = base_family) %+replace%
+    theme(
+    axis.text = element_text( color = color), 
+    axis.line = element_line(size = line_size
+    , color = color),
+    axis.ticks = element_line(color = color)
+    )
+}
+```
+
+## Notes on text formatting {-}
+
+Throughout this book, terms that require special attention are presented in **bold**. *Italics* are used to highlight relevant concepts, although with a lesser degree of emphasis. Likewise, `inline code` formatting is used to differentiate functions, commands, variable names, or code snippets integrated into the body of the text, distinguishing them from both **bold** and *italic*.
+
+## Asides {-}
+
+The following icons appear throughout the book:
+
+```{block2, tip, type='rmdtip'}
+
+Here is some additional information that you may find useful.
+
+```
+
+
+```{block2, caution, type='rmdcaution'}
+
+Here is some advice that you may find useful.
+
+```
+
+
+## Inspirational readings {-}
+
+Below are the books that personally inspired me.
+
+### Data visualization {-}
+
+- Cole Nussbaumer Knaflic. _Storytelling with Data: A Data Visualization Guide for Business Professionals_ .Wiley, 2015. This book offers clear and well-structured guidance on how to transform data into effective visualizations. When I first read the book, it gave me a new perspective on visualization design, sparking my interest in the field of data visualization. Although the book focuses mainly on examples from the business world, it leaves out certain aspects that are relevant to the scientific world, such as the visualization of uncertainty or distribution. 
+
+- Alberto Cairo. _The Truthful Art_. New Riders, 2016. This book helped me go beyond attractive visual design and develop a more analytical approach to data. It taught me the importance of communicating information responsibly through clear and well-founded visualizations.
+
+- Jonathan Schwabish. _Better data visualizations : a guide for scholars, researchers, and wonks_. Columbia University Press, 2021. A very informative and easy-to-read book on data and data visualization. Recommended as a follow-up to Cole's “ _Storytelling with Data_ .”
+
+### Visualization books + R code {-}
+
+- Hadley Wickham and Garrett Grolemund. _R for Data Science_. O’Reilly Media, 2017. This book represented my first significant introduction to R. Its clear and accessible language facilitates understanding of how to work with data, covering everything from manipulation to visualization with tools such as ggplot2.
+
+- Winston Chang. _R Graphics Cookbook_ . O’Reilly Media, 2018. This book helped me gain a deeper understanding of how to use ggplot2. Its explanations, organized into concise and well-structured recipes, allowed me to understand both how to create and customize graphs.
+
+- Michael C. Whitlock and Dolph Schluter. _The Analysis of Biological Data_. Freeman and Company, third edition, 2020. It is a comprehensive book. Throughout the book, he interprets and analyzes examples using biological data, and also uses the R language for data manipulation and graph generation. He has his own website where you can find the data and R codes used in the chapters, as well as many other educational resources. In my opinion, it is a must-have textbook.
+
+## Acknowledgments {-}
+
+This book was made possible thanks to the tireless work of the community that develops and maintains the R language. I would also like to extend my gratitude to the creators of exceptional packages (cited throughout the book), whose tools made the start and development of this project possible. Among all these contributions, I would like to express my special thanks to Hadley Wickham for developing ggplot2, and to Yihui Xie, co-author of RMarkdown and creator of bookdown.
+
+I would also like to express my gratitude to Michael Whitlock, author of The Analysis of Biological Data, for taking the time to respond to my email and for his kind words of encouragement during the development of this book.
+
+I sincerely thank my professor Pedro Chimoy Effio, whose recommendations and constant interest were a source of motivation and guidance throughout this project.
+
+My gratitude also goes to Elliot Morsia, editor at Chapman & Hall/CRC, who supported me throughout the publication process. He responded to each of my queries with generosity and patience. It has been a real pleasure to work with him. 
+
+I would like to express my sincere thanks to Cédric Scherer and Wilhelmiina Toivo for their valuable and thorough comments, which contributed significantly to improving the content of this manuscript.
+
+
+Finally, I extend my gratitude to my family and to Karen Milian, whose unconditional support and constant encouragement were essential throughout the process of developing this work.

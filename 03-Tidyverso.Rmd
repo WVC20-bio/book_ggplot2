@@ -1,0 +1,495 @@
+# The tidyverse {#tidyverse}
+
+In this chapter, we will explore the Tidyverse ecosystem, a collection of packages designed to work with data in a consistent and efficient manner in R. In addition, these packages share the same philosophy, which is to promote a more orderly and efficient way of working with data [@tidy-data; @wickham_welcome_2019].
+
+The Tidyverse consists of the following packages: `readr`, `dplyr`, `tidyr`, `ggplot2`, `purrr`, `forcats`, `stringr`, `lubridate`, and `tibble`. Each of these packages will be installed automatically when you install the megapackage. \index{The tidyverse}
+
+```{r, echo=TRUE, warning=FALSE, error=TRUE}
+library(tidyverse)
+```
+
+Throughout this chapter, we will focus on some of these packages, with special emphasis on ggplot2, one of the most powerful packages for creating graphics in R.
+
+## readr
+
+This package allows us to import and export different types of files. If I mention it first, it is because we will be using it many times to read our data. If we want to import a data, we will use the `read_"data type"` function (csv, tsv) , but if we want to export that same data we will use the `write_"data type"` function (csv, tsv) [@wickham23]. \index{The tidyverse!readr}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+iris_data <- readr::read_csv(file = "data/Chapter03/iris.csv")
+
+```
+
+We will use a well-known data set consisting of 50 samples of each of the three species of Iris (Setosa, Virginica and Versicolor). In addition, four characteristics of each sample were measured: the length and width of the sepals and petals, in centimeters [@fisher].
+
+```{block2, data, type='rmdtip'}
+
+__Want to know more?__
+
+The iris dataset is so famous, that it is included in R base. Just put __iris__ in the console. If you want more detail, run "?iris".
+
+```
+
+## dplyr {#dplyr}
+
+It's a package of multiple functions that act on data manipulation. These functions are known as "verbs", which can be combined to yield a desired outcome. \index{The tidyverse!dplyr}
+
+These "verbs" are
+
+-   **select:** Select `columns`, which represent the variables in your dataset.
+-   **filter:** This function is responsible for selecting a `subset of rows`, according to the condition you specify. In addition, `logical` and `relational` operators are used.
+-   **arrange:** Allows you to reorder the rows for a certain variable. To sort your rows in descending order, you need to add the `desc()` operator, and if you don't add anything, the order of your data will be in ascending order.
+-   **rename:** Allows you to `change` the name of variables in your original data.
+-   **mutate:** Allows you to `add` variables from an original variable from your data.
+-   **summarise:** It allows us to generate `statistical data` such as mean, standard deviation (sd) from your original data.
+-   **pipeline (%\>% o \|\> ):** This operator allows you to `link` the "verbs" of dplyr.
+
+We are going to perform some exercises:
+
+### select()
+
+This function allows choosing and extracting columns of interest from the data frame.
+
+The most used action with the `select()` function is to choose the variables that you are going to use for your analysis. \index{The tidyverse!dplyr!select}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+# Select `sepal.length`,`petal.length` and `variety`
+#  from the `iris_data`
+
+length <- dplyr::select(iris_data,sepal.length,
+          petal.length,variety)
+
+head(length,4)
+
+```
+
+We can also omit variables with the `select()` function using the negative sign.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+# We will omit the variables that have measured the width.
+
+length <- dplyr::select(iris_data, -c(sepal.width,petal.width))
+
+head(length,4) # We have the same results
+
+```
+
+### filter()
+
+Unlike `select()`, the `filter()` function allows you to extract rows from your dataset. \index{The tidyverse!dplyr!filter}
+
+We use the `filter()` function to extract the rows of the species **iris versicolor**.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+# Extracting the rows of the species iris versicolor
+# from the `length`.
+
+versicolor_length <- dplyr::filter(length, 
+                 variety == "Versicolor")
+
+head(versicolor_length,4)
+
+```
+
+In addition, we can also filter out only measurements that are greater than 4 cm.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+versicolor_length <- dplyr::filter(versicolor_length, 
+                 sepal.length > 4, 
+                 petal.length > 4)
+
+head(versicolor_length,4)
+
+```
+
+### summarise()
+
+This function allows me to generate a new data frame with the summary (sum or mean) of a variable. \index{The tidyverse!dplyr!summarise}
+
+The function was then used to determine the mean of all measurements in the data set. In addition, within the `summarise()` function you can use other base functions that are built into R, such as `mean()`, `max()` and `median()`.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+average_measurements <- dplyr::summarise(iris_data,
+                    mean_sepal_length = mean(sepal.length),
+                    mean_sepal_width = mean(sepal.width),
+                    mean_petal_length = mean(petal.length), 
+                    mean_petal_width = mean(petal.width))
+head(average_measurements[, 1:3])
+```
+
+If you want to perform a complete statistical summary of each variable, you could use the base `summary()` function.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+summary(iris_data)
+```
+
+### group_by()
+
+The `group_by()` function together with the `summarise()` function are used to generate summary statistics. \index{The tidyverse!dplyr!group\_by}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+average_species_measurements <- iris_data %>%
+    dplyr::group_by(variety) %>%
+    dplyr::summarise(
+     mean_sepal_length = mean(sepal.length),
+     mean_sepal_width = mean(sepal.width),
+     mean_petal_length = mean(petal.length), 
+     mean_petal_width = mean(petal.width))
+head(average_species_measurements[, 1:4])
+```
+
+### mutate()
+
+It allows me to generate new variables, that is, to add additional columns from existing data. In the following example, our goal is to determine the longest petal or sepal length for each sample. To do this, we first apply the `rowwise()` function, which allows us to perform row-by-row calculations within the data frame. Then, within the `mutate()` function, we use `max(sepal.length, petal.length)` to obtain the maximum value between the two lengths. \index{The tidyverse!dplyr!mutate}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+max_length <- iris_data %>%
+            dplyr::rowwise() %>%
+            dplyr::mutate(max_len = max(sepal.length,
+                                petal.length))
+  
+head(max_length,4)
+```
+
+### rename()
+
+This function allows you to change the names of your variables easily. The names that you are going to add have a space, you must use the quotation marks, as in this example. \index{The tidyverse!dplyr!rename}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+rename_data   <- iris_data %>%
+    dplyr::rename(
+    "Sepal length" = sepal.length, 
+     "Sepal width" = sepal.width,
+    "Petal length" = petal.length, 
+     "Petal width" = petal.width, 
+     "Species" = variety
+    )
+head(rename_data,4)
+```
+
+### arrange()
+
+This function allows the rows of a data frame to be arranged according to a specific criterion. In the following example, the length measurements were sorted in descending order, for which a minus sign (-) was prefixed to the variables sepal.length and petal.length. On the other hand, the variables sepal.width and petal.width were kept in ascending order. \index{The tidyverse!dplyr!arrange}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+arrange_data <-  iris_data %>% 
+  dplyr::group_by(variety) %>%
+  dplyr::arrange(-sepal.length, sepal.width, 
+                 -petal.length, petal.width)
+
+head(arrange_data,4)
+```
+
+## tidyr
+
+This package is used to structure ordered data. The characteristic of an ordered data is: 1) each variable is a column; 2) each observation is a row 3) each value is contained in a cell. \index{The tidyverse!tidyr}
+
+### pivot_longer() and pivot_wider()
+
+It allows you to create sorted data, the main functions being `pivot_longer` and `pivot_wider`. The first function transforms a wide data into a long one, while the other function does the opposite [@tidyr].
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+iris_longer <-  iris_data %>%  
+rowid_to_column() %>%  # add a "rowid" column
+tidyr::pivot_longer(-c(variety,rowid),
+  names_to = "measure",values_to = "values")
+head(iris_longer,4)
+```
+
+In the first exercise, we started by adding a column at the beginning of the data frame with sequential ascending row identifiers, starting from 1, using the `rowid_to_column()` function. Subsequently, we apply `pivot_longer()` to reorganize the data, creating a column called “measure” that groups all the measurements of the iris varieties and another column that stores the values corresponding to those measurements.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+iris_longer %>% 
+  tidyr::pivot_wider(
+    names_from = "measure", 
+    values_from = "values"
+  ) %>% dplyr::select(-rowid)
+
+```
+
+Then, as a second exercise. We will return our main form (i.e. in wide format) using `pivot_wider()` and lastly we will remove the “rowid” column.  \index{The tidyverse!tidyr!pivot\_wider and pivot\_longer}
+
+### gather() and spread()
+
+Another easy way to switch from wide format to long format is to use the `gather()` function. \index{The tidyverse!tidyr!gather and spread} 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+iris_gather <- iris_data %>%
+rowid_to_column() %>%
+tidyr::gather(
+  key = measure, # name of the column containing the measurements
+  value = values, # name of the column containing the values
+  -variety,-rowid # column not included in the selection
+)
+head(iris_gather,4)
+```
+
+On the other hand, another way to switch from long format to wide format is by using `spread()`. This function creates multiple features from two existing columns.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+iris_spread <- iris_gather %>%
+  tidyr::spread(
+  key = measure, 
+  value = values,
+  ) %>% select(-rowid)
+head(iris_gather,4)
+```
+
+### separate() and unite()
+
+This function allows you to split a single column into multiple columns. By default, `separate()` will separate the values when it detects non-alphanumeric characters. \index{The tidyverse!tidyr!separate and unite} 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+iris_separate <-  iris_longer %>%
+tidyr::separate(col = measure, into = c("part", "measure"))
+head(iris_separate,4)
+```
+
+On the other hand, the `unite()` function combines several columns into a single column.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+
+iris_unite <-  iris_separate %>%
+  tidyr::unite(measure, part, measure)
+
+head(iris_unite,4)
+```
+
+## purrr
+
+It generates *loops* through the family of functions called `map()`. These loops help to perform an action of interest multiple times, generated by the computer. \index{The tidyverse!purrr} 
+
+## tibble
+
+It's a **data frame** but modernized and improved. Some of its advantages are that it never alters the input type, string vectors are not forced to change to factor type, it shows the first rows and all columns of your data, among other features [@wickham23].\index{The tidyverse!tibble}
+
+## ggplot2 {#ggplot}
+
+It allows you to generate 'elegant' and 'manageable' graphs. Its popularity is due to the fact that all graphics are generated through a coherent system known as the **graph grammar** (`gg` in ggplot2 means graph grammar) [@wickham23]. This graph grammar is made up of a combination of graphical components, which act as interlinked layers by means of the “+” pipe (Figure \@ref(fig:temple)). \index{The tidyverse!ggplot2}
+
+(ref:temple) Graph components of the ggplot graph grammar.
+
+```{r temple, echo = FALSE,warning=FALSE, message=FALSE,dpi=600,fig.cap= '(ref:temple)', fig.align='center',out.width='90%', fig.width= 6, fig.height= 4}
+knitr::include_graphics(rep("images/ggplot_estructure.png"))
+```
+
+Figure \@ref(fig:temple) shows the steps to follow from data entry to obtaining a customized chart. In the following we will discuss each step up to the elaboration of the graph in the figure. 
+
+### Data and mapping
+
+First, it is necessary to import the data using the __readr__ tool of the tidyverse package. Then, we use the main function `ggplot()` to load the data. At this stage, `ggplot()` already recognizes the data set, but it does not yet know how to represent it visually, so we need to specify which variables will be __mapped__ on the plot.
+
+Suppose we want to visualize the length of the sepal according to the different species of iris. To do this, we use the function `mapping = aes()` together with the necessary arguments to associate the variables with the visual elements of the graph. Among these, the values of “x” and “y” are fundamental, as they determine what will be displayed on each axis. In this case, "the x-axis variable will correspond to variety, while the y-axis variable will be` sepal.length`".
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+library(tidyverse)
+# Importing a dataset into R
+iris_data <- readr::read_csv(file = "data/Chapter03/iris.csv")
+
+# We will create an object “p”, containing the main information
+
+p <- ggplot(iris_data, # Data
+       mapping = aes(x = variety, # x-axis
+       y = sepal.length,          # y-axis
+       fill = variety))           # aesthetic assignment
+
+```
+
+Within the `mapping` function, it is possible to incorporate other aesthetic or visual properties, such as color, shape, size or line type (Figure  \@ref(fig:temple)). These aesthetic mappings indicate how our data variables will be translated into visual elements such as color or fill, among others. In the case of our example, the fill will be determined by the variable variety.
+
+### Geometric objects
+
+At this point, we already have the area of the plot defined, that is, the Cartesian plane with its respective x and y axes. The next step is to tell *ggplot* what kind of plot we want to build. To do this, we add a new layer using one of the `geom_*()` functions. For example, if we want to represent a boxplot, a specific type of geometric object, we can do it using the `geom_boxplot()` function.  
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+# A layer of geom_*()
+p + geom_boxplot()
+# Another layer of geom_*()
+# keep in mind the order
+p + geom_boxplot(outliers = FALSE, # independent arguments to aes()
+      position = position_nudge(x = -0.1)) +
+    geom_jitter(height =0.05,width = 0.05, size = 2,
+      shape = 21,color = "gray40", fill = "gray90")
+
+```
+
+Thanks to the flexibility offered by *ggplot*, we are not limited to incorporating a single geometric object; we can add multiple layers to the graph in an organized manner until we achieve the visualization we are looking for. For example, if we want data points with jitter above the box plots, we add `geom_jitter()` after `geom_boxplot()`.
+
+(ref:geometric) Sepal length in three species of the genus iris. The boxes represent 50% of the data and the upper and lower bars extend to the maximum and minimum of the data. The point cloud is the values for each individual.
+
+```{r geometric, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:geometric)',fig.align='center'}
+iris_data <- readr::read_csv(file = "data/Chapter03/iris.csv")
+p <- ggplot(iris_data, 
+       mapping = aes(x = variety, 
+       y = sepal.length,        
+       fill = variety))    
+
+p + geom_boxplot(outliers = FALSE,
+      position = position_nudge(x = -0.1)) +
+    geom_jitter(height =0.05,width = 0.05, size = 2,
+                shape = 21,color = "gray40", fill = "gray90")
+
+```
+
+Another relevant aspect to consider is that the different `geom_*()` functions can receive additional arguments that are not part of the aesthetic mapping, as shown in Figure \@ref(fig:geometric). In the case of `geom_jitter()`, for example, attributes such as style, color and fill were applied to the points, which were specified outside the `aes()` function. This allows to further customize the appearance of the plot without altering the direct link between the data and its visual representations. 
+
+### Coordinate and Scales
+
+As previously mentioned, the area of a plot in *ggplot* is based on a **Cartesian plane**. One of the great advantages of this tool is the possibility to modify not only the limits of the axes, but also the appearance of the various elements that have been incorporated into the plot.
+
+Let's begin by exploring how to adjust the axis limits. One particularly interesting aspect of ggplot is that it offers multiple ways to do this, allowing you to choose the option that best suits your style or is easiest for you to remember. In the following example, we will focus on modifying the y-axis limits, setting them in a range from 4 to 8.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+coord_cartesian(ylim = c(4,8)) # 1st choice
+
+scale_y_continuous(limits = c(4,8)) # 2nd option
+
+ylim(4,8) # 3rd option
+
+```
+
+As you can see, there are at least three different ways to achieve the same result. In this case, I chose to use `coord_cartesian()`, although I will also rely on the `scale_y_continuous()` function for more control.
+
+In addition to setting a specific range for the axis, I want the boundary values to appear explicitly as tick marks on the graph. To do this, I use the `breaks` argument, which allows me to manually define at which points on the axis the tick marks will be placed.
+
+Next, we will explore how to modify the visual appearance of the different elements that make up a plot. To do this, ggplot offers a number of functions starting with `scale_`.
+
+If your goal is to change the fill color of the box plots, you should use `scale_fill_`. On the other hand, if you want to adjust the color of the outline, lines or points, the appropriate function is `scale_color_`.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+p + geom_boxplot(outliers = FALSE,
+      position = position_nudge(x = -0.1)) + 
+geom_jitter(height =0.05,width = 0.05, size = 2,
+      shape = 21,color = "gray40", fill = "gray90") +
+coord_cartesian(ylim = c(4,8)) + 
+scale_y_continuous(breaks = c(4,5,6,7,8)) + 
+scale_fill_manual(values = c("#E69F0090", 
+      "#009E7390", "#56B4E990"))
+
+```
+
+
+### Labels and guide
+
+In the final stages of graph construction, layers are available to allow more detailed customization of its presentation. By default, the axis labels correspond to the names of the variables assigned in the aesthetic mapping by `mapping = aes()`. However, using the `labs()` function, it is possible to explicitly define the labels of the main title, subtitle, caption and axes, thus providing a higher level of clarity and context to the visualization.
+
+```{r,error=FALSE,eval=FALSE, echo=FALSE}
+## Theme used in the book
+
+theme_us_classic <- function(base_size  = 14, 
+                     base_family  = "") {
+  color = "grey50"
+  line_size = 0.5
+  ggplot2::theme_classic(base_size = base_size, 
+    base_family = base_family) %+replace%
+    theme(
+    axis.text = element_text( color = color), 
+    axis.line = element_line(size = line_size
+    , color = color),
+    axis.ticks = element_line(color = color)
+    )
+}
+```
+
+
+(ref:label-guide) Sepal length in three species of the genus iris. Properly labeled graphic with a specific theme.
+
+```{r label-guide,  out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:label-guide)',fig.align='center'}
+## Theme used in the book
+theme_us_classic <- function(base_size  = 14, 
+                     base_family  = "") {
+  color = "grey50"
+  line_size = 0.5
+  ggplot2::theme_classic(base_size = base_size, 
+    base_family = base_family) %+replace%
+    theme(
+    axis.text = element_text( color = color), 
+    axis.line = element_line(size = line_size
+    , color = color),
+    axis.ticks = element_line(color = color)
+    )
+}
+
+
+ggplot(iris_data, 
+       aes(x = variety,
+           y = sepal.length,
+           fill = variety)) +
+geom_boxplot(outliers = FALSE,
+             position = position_nudge(x = -0.1)) + 
+geom_jitter(height =0.05,width = 0.05, size = 2,
+            shape = 21,color = "gray40", fill = "gray90") +
+coord_cartesian(ylim = c(4,8)) + 
+scale_y_continuous(
+      breaks = c(4,5,6,7,8)) + 
+scale_fill_manual(values = c("#E69F0090", 
+      "#009E7390", "#56B4E990")) +
+labs(x = "", y = "Sepal length (cm)") + 
+theme_us_classic() + 
+theme(legend.position = "none")
+
+```
+
+You can also change the axis labels with the `xlab()` and `ylab()` functions. In addition, you can use the ggtitle() function to add title and subtitle. 
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+labs() # Add tags such as title, subtitle, caption
+       # also of the axes
+
+xlab() and ylab() # Adding labels to axes
+
+ggtitle() # Add tags such as title and subtitle 
+
+
+```
+
+Finally, the overall appearance of the plot can be adjusted using the `theme()` function. ggplot2 includes a variety of preset themes, with` theme_gray()` being the default. This basic theme can serve as an initial draft to work on, allowing you to refine the style of the plot later using other themes available in the library or even creating your own (see Chapter \@ref(changes-design)). In this book, the custom theme chosen for the visualizations is `theme_us_classic()`.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+p + geom_boxplot(outliers = FALSE,
+     position = position_nudge(x = -0.1)) + 
+geom_jitter(height =0.05,width = 0.05, size = 2,
+            shape = 21,color = "gray40", fill = "gray90") +
+coord_cartesian(ylim = c(4,8)) + 
+scale_y_continuous(
+      breaks = c(4,5,6,7,8)) + 
+scale_fill_manual(values = c("#E69F0090", 
+      "#009E7390", "#56B4E990")) +
+theme_us_classic() + 
+theme(legend.position = "none")
+
+```
+
+In addition to the selected theme, you can still use the `theme()` function to make additional adjustments to the appearance of the chart. \index{theme function}
+
+```{block2, plot, type='rmdtip'}
+
+__Want to know more?__
+
+- The _ggplot2_ package has two functions to create plots which are `qplot()` and `ggplot()`, however, in this book we will use `ggplot()`, because it is more flexible and at the same time robust to generate the plots.
+
+- Manually typing the pipe operator `%>%` can be a bit tedious during continuous work. Fortunately, there is a keyboard shortcut that makes it easy to use: on macOS you can use `CMD + SHIFT + M`, while on Windows the corresponding shortcut is `CTRL + SHIFT + M`. This shortcut significantly speeds up writing code in the workflow with tidyverse tools.
+
+```
+
+
+## In conclusion
+
+Proper handling of the data from the start is essential, as organizing it correctly facilitates its later visualization. The set of tools offered by the Tidyverse package is key for this purpose. Within this package, *dplyr* and *tidyr* allow us to structure the data in an orderly way, while *ggplot2* gives us the possibility to create elegant graphs following the principles of “graph grammar”. In this chapter, we have learned step by step how to build a visualization using ggplot.
+

@@ -1,0 +1,621 @@
+# Split-panel figures {#panel-figures}
+
+In publications such as articles or books, it is common to find figures composed of small panels, where each panel represents a type of graph. This division allows data to be organized into subsets in a structured way, which facilitates their comparison and analysis. However, in some cases, a figure may include multiple types of graphs presenting different sets of data. In this chapter, we will explore in detail how to create and customize both types of figures.
+
+## Make small multiples {#small-multi}
+
+Throughout the book we have made this type of figure with several panels containing graphs (one type only). This action is known as “small multiples” and allows the data to be divided into subsets according to one or two variables. This technique, also known as “faceted”, is effective in presenting a large data set in a compact and easily comparable form (Figure \@ref(fig:ft1)). Faceting can be performed according to one variable or two variables. If you are splitting your data with one variable you should use `facet_wrap()`, but if you are splitting your data with two variables use `facet_grid()`. \index{facet\_grid function}
+
+In our first example, we will work with a dataset that analyzes the use of bar charts to represent continuous data (inappropriately) and bar charts showing counts or proportions (appropriately) in articles published between 2010 and 2020 [@Riedel20]. Furthermore, we will divide these data into 23 different scientific fields (`face_wrap(~FoR_category)`) that were evaluated. As a result, we obtained 23 line graphs, where each facet or panel will be labeled at the top according to the corresponding field (Figure \@ref(fig:ft1)).
+
+This visualization shows that the incorrect use of bar charts to represent continuous data is more frequent than their proper use to show counts or proportions. In 15 fields analyzed, the proportion of articles using bar charts for continuous data ranges from 30% to 60%, while the use of bar charts to represent counts or proportions remains below 25% in most cases. The article recommends avoiding the use of bar charts to represent summary statistics, such as mean and standard error or standard deviation, in continuous data. Instead, it suggests opting for visualizations that allow analysis of data distribution, such as dot plots for small data sets, and box plots, violin plots, or histograms for larger data.
+
+
+(ref:ft1) Bar plots are commonly used incorrectly. Each graph shows the percentage of items using bar graphs to display continuous data (blue line), versus counts and proportions (orange line), for one of the 23 fields during 2010 and 2020. The shaded regions above and below each bar show 95% confidence intervals. Inappropriate use of bar charts to show continuous data is more common than appropriate use of bar charts to show counts or proportions.
+
+```{r ft1, fig.width = 5.5*6/3.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:ft1)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggtext,
+   DescTools,
+   scales
+  )
+
+pmc_results  <- read.csv(file = 
+            "data/Chapter11/study_results.csv", 
+            header = TRUE,  sep=",")  %>%
+  filter(pdf_downloaded) %>%
+  mutate(informative = box + dot + hist + violin + bardot) %>%
+  mutate(FoR_category = FoR_category %>%
+           str_replace("Multidisciplinary", "Multidisciplinary Journals") %>%
+           replace_na("Unclassified Journals") %>%
+           str_replace("and", "&") %>%
+           str_split(" - ") %>%
+           map_chr(last))
+
+pmc_results_agg <- pmc_results %>%
+  group_by(year, FoR_category) %>%
+  summarise(total = n(),
+            approp_count = sum(approp > 0, na.rm = TRUE),
+            bar_count = sum(bar > 0, na.rm = TRUE),
+            bardot_count = sum(bardot > 0, na.rm = TRUE),
+            box_count = sum(box > 0, na.rm = TRUE),
+            dot_count = sum(dot > 0, na.rm = TRUE),
+            irrelevant_flow_count = sum(flowno > 0, na.rm = TRUE),
+            flow_count = sum(flowyes > 0, na.rm = TRUE),
+            hist_count = sum(hist > 0, na.rm = TRUE),
+            other_count = sum(other > 0, na.rm = TRUE),
+            pie_count = sum(pie > 0, na.rm = TRUE),
+            text_count = sum(text > 0, na.rm = TRUE),
+            violin_count = sum(violin > 0, na.rm = TRUE),
+            informative_count = sum(informative > 0, na.rm = TRUE),
+            informative_only_count = sum(informative > 0 & bar == 0, na.rm = TRUE),
+            bar_only_count = sum(bar > 0 & informative == 0, na.rm = TRUE),
+            bar_informative_count = sum(bar > 0 & informative > 0, na.rm = TRUE),
+            approp_perc = (approp_count/total * 100) %>% round(2),
+            bar_perc = (bar_count/total * 100) %>% round(2),
+            bardot_perc = (bardot_count/total * 100) %>% round(2),
+            box_perc = (box_count/total * 100) %>% round(2),
+            dot_perc = (dot_count/total * 100) %>% round(2),
+            irrelevant_flow_perc = (irrelevant_flow_count/total * 100) %>% round(2),
+            flow_perc = (flow_count/total * 100) %>% round(2),
+            hist_perc = (hist_count/total * 100) %>% round(2),
+            other_perc = (other_count/total * 100) %>% round(2),
+            pie_perc = (pie_count/total * 100) %>% round(2),
+            text_perc = (text_count/total * 100) %>% round(2),
+            violin_perc = (violin_count/total * 100) %>% round(2),
+            informative_perc = (informative_count/total * 100) %>% round(2),
+
+            informative_only_perc = (informative_only_count/total * 100) %>% round(2),
+            bar_only_perc = (bar_only_count/total * 100) %>% round(2),
+            bar_informative_perc = (bar_informative_count/total * 100) %>% round(2),
+  ) %>%
+  mutate(year = as.integer(year))
+
+add_CI <- function(dataset, var_name)
+{
+  count_col <- paste0(var_name, "_count")
+  lwrCI_col <- paste0(var_name, "_lwrCI")
+  uprCI_col <- paste0(var_name, "_uprCI")
+
+  lwrCI <- map2_dbl(dataset[[count_col]], dataset$total,
+                        function(x,y) BinomCI(x,y,conf.level=0.95,
+                        method="agresti-coull")[2] * 100)
+  uprCI <- map2_dbl(dataset[[count_col]], dataset$total,
+                        function(x,y) BinomCI(x,y,conf.level=0.95,
+                        method="agresti-coull")[3] * 100)
+  dataset[[lwrCI_col]] <- lwrCI
+  dataset[[uprCI_col]] <- uprCI
+
+  return(dataset)
+}
+
+categories <- c("approp", "bar", "bardot", "box", "dot", "flow",
+                "hist", "pie", "violin", "informative",
+                "informative_only", "bar_only", "bar_informative")
+
+for(cat in categories)
+{
+  pmc_results_agg <- pmc_results_agg %>%
+    add_CI(cat)
+}
+
+
+color_palette <- c("#0072B2", "#D55E00")
+
+var_names <- c("bar_perc",
+               "approp_perc",
+               "bar_lwrCI",
+               "bar_uprCI",
+               "approp_lwrCI",
+               "approp_uprCI")
+var_order <- c("bar",
+               "approp")
+label_names <- c("Bar graphs of continuous data (inappropriate)",
+                 "Bar graphs of counts or proportions (appropriate)")
+
+
+small_multiple_plot_multivar_CI <- function(
+    data, var_names, label_names, var_order,
+    color_palette, label_width = 50,
+    ymax = 100)
+{
+  data %>%
+    pivot_longer(cols = var_names,
+                 names_to = c("type", ".value"),
+                 names_pattern = "(.+)_(.+)"
+    ) %>%
+    mutate(type = as.factor(type)) %>%
+    mutate(type =  fct_relevel(type, var_order)) %>%
+    ggplot(aes(x = year,
+               y = perc,
+               color = type)) +
+    geom_ribbon(aes(ymin = lwrCI, ymax = uprCI, 
+      fill = type), alpha = 0.4, linetype = 0,
+      show.legend = FALSE) +
+    geom_line() +
+    scale_x_continuous(breaks = pretty_breaks(3)) +
+    scale_color_manual(name = "Graph types",
+          labels = str_wrap(label_names, width = label_width),
+          values = color_palette) +
+    scale_fill_manual(name = "Graph types",
+          labels = str_wrap(label_names, width = label_width),
+          values = color_palette) +
+    ylim(0, ymax) +
+    facet_wrap(~FoR_category, labeller = label_wrap_gen(width = 15),
+               scales = "free") +
+    labs(x = "",
+         y = "Percentage of papers") +
+    theme_us_classic() + 
+    theme(strip.text = element_text(size = 9,
+      hjust = 0), strip.background = element_rect(
+      fill = "grey85",
+      colour = "grey85",linetype = 1, size = 0.25),
+      axis.title.y = element_text(hjust = 1),
+      legend.text = element_text(size = 12,
+                  margin = margin(t = 10)),
+      axis.text.x = element_text(size = 9),
+      axis.text.y = element_text(size = 9),
+      legend.key = element_blank(),
+      legend.justification = "top",
+      plot.margin = margin(t = 4, r = 8, 
+                           b = 2, l = 5),
+      panel.spacing.x =  unit(0.8, "cm"))
+
+}
+
+small_multiple_plot_multivar_CI(pmc_results_agg, var_names, 
+                                label_names, var_order,
+                                color_palette, label_width = 25)
+
+
+```
+
+As shown in Figure \@ref(fig:ft1), there are a total of 23 facets. When the number of facets is greater than five, it is recommended that each one has its own axis. In addition, to avoid misinterpretation, it is essential that they all maintain the same scale. Also, in figures with multiple facets or panels, the general title of the y-axis is usually far from the figure, so relocating it to the upper left would be a better option. Likewise, placing the legend at the top right allows you to quickly know what each line represents. 
+
+As a second example, we will again work with the data set of three penguin species (Figure \@ref(fig:facet2)). This time, we will subdivide the data according to species and gender using facet_grid(species ~ sex).The result will be a set of six scatterplots organized in a grid of two columns (corresponding to female and male genders) and three rows (representing each of the penguin species). Each column and row is labeled, aligned to the left, and all facets share axes with the same scale to facilitate comparison.
+
+(ref:facet2)  Body mass as a function of fin length in three species of penguins. The data were divided according to genus and the three species of penguins. Data source: @allison20.
+
+```{r facet2, fig.width = 5.5*6/3.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:facet2)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        palmerpenguins)
+
+data_clean <- penguins
+
+# function: count_na
+
+count_na <- function (a){
+counts <- sapply(a,function (x) sum(is.na(x)))
+data.frame(counts)
+}
+
+# count_na(data_clean)
+
+
+## replacing nulls
+
+cal_mean <- function (a,b){
+as.double(round(mean(a, na.rm=TRUE),b))
+}
+
+
+# bill_depth_mm
+data_clean$bill_depth_mm[is.na(data_clean$bill_depth_mm)] <- cal_mean(data_clean$bill_depth_mm,1)
+# bill_length_mm
+data_clean$bill_length_mm[is.na(data_clean$bill_length_mm)] <- cal_mean(data_clean$bill_length_mm,1)
+# flipper_length_mm
+data_clean$flipper_length_mm[is.na(data_clean$flipper_length_mm)] <- cal_mean(data_clean$flipper_length_mm,0)
+data_clean$body_mass_g[is.na(data_clean$body_mass_g)] <- cal_mean(data_clean$body_mass_g,0)
+
+
+data_clean <- na.omit(data_clean) 
+
+ggplot(data_clean, aes(x = flipper_length_mm,
+                     y = body_mass_g)) +
+geom_point(aes(color = sex,
+               fill = sex),shape = 21,
+           size = 3, alpha = 0.5) + 
+scale_x_continuous(limits = c(170,230)) + 
+scale_y_continuous(limits = c(2500,6500),
+                   breaks = c(3000, 4000,
+                    5000, 6000), 
+                   labels = c(
+                     "3kg", "4kg","5kg",
+                     "6kg")) +
+scale_color_manual(values = c(
+  "male" = "#56B4E980",
+  "female" = "#E69F0080"
+), na.translate = FALSE) + 
+scale_fill_manual(values = c(
+  "male" = "#56B4E9",
+  "female" = "#E69F00"
+), na.translate = FALSE) + 
+facet_grid(species~sex,  axes = "all",
+           space = "free_x") + 
+labs(x = "Flipper length (mm)",
+       y = "Body mass (kg)") + 
+theme_us_classic() + 
+theme(strip.text = element_text(size = 14,
+      hjust = 0,  margin = margin(3.5, 3.5, 3.5, 3.5)), 
+      strip.background  = element_rect(
+        fill = "grey85", colour = "grey85",
+        linetype = 1, size = 0.25),
+      axis.title.y = element_text(hjust = 1),
+      axis.title.x = element_text(hjust = 0),
+      axis.text.x = element_text(margin = margin(7, 0, 0, 0)),
+      legend.key = element_blank(),
+      legend.position = "none", 
+      panel.spacing.y =  unit(0.2, "cm"),
+       panel.spacing.x =  unit(0.3, "cm"))
+
+
+```
+
+
+```{block2, facet0, type='rmdtip'}
+
+__Want to know more?__
+
+-  For both `facet_wrap()` and `facet_grid()` the tilde argument (“~”) allows you to specify which variable will split the data. The variable must be categorical. 
+
+- Another important argument is to control the numbers of columns and rows. 
+
+- There are additional arguments. Control the spacing of the facets with `theme(panel.spacing.y or panel.spacing.x)`, the text of the labels with `theme(strip.text)` and the color of the labels with `theme(strip.background)`. 
+
+```
+
+## Combine multiple figures {#combine-fig}
+
+There are situations where we only want to combine several graphics in a single figure to convey general information. This action is widely used for presentations at congresses (by means of posters) or for publication in articles. In addition, some journals set limits on the number of figures allowed per publication. 
+
+In Figure \@ref(fig:ft3), it shows that the exercise intervention was effective in increasing hippocampal size [@Erickson20]. The panels in Figure \@ref(fig:ft3) are labeled alphabetically (upper or lower case) and provide more detailed information. In addition, panel labels are conveniently located in the upper left corner. In this example, the presence of a legend is sufficient, and their strategic positioning allows the reader to know immediately what the lines in your graphs mean.
+
+
+(ref:ft3) The influence of aerobic exercise on three brain regions. (A) Increase in hippocampal volume for the aerobic exercise group and a decrease in volume for the stretching control group. (B) Change in the volume of the caudate nuclei for both groups. (C) Change in the volume of the thalamus for both groups. None of the changes were significant for the thalamus. Error bars from the original figure were not shown.
+
+```{r ft3, fig.width = 5.5*6/3.2, fig.asp = 0.8,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:ft3)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        cowplot)
+
+data = read_xlsx(path = 
+        "data/Chapter11/size_hippocampus.xlsx",
+       col_names = TRUE)
+
+
+p1 <- ggplot(data, 
+       aes(x = treatment,
+           y = left_hippo,
+           color = group)) + 
+geom_line(aes(group = group),
+          size = 0.8) + 
+geom_point(size = 2.5,
+           show.legend = FALSE) + 
+scale_y_continuous(limits = c(4.6,5.2),
+            expand = c(0,0),
+            breaks = c(
+            4.6,4.7,4.8,4.9,5,5.1,5.2         
+                   ),
+            labels = c(
+             "4.6","4.7","4.8","4.9","5","5.1","5.2" 
+            )) +
+scale_x_discrete(limits = c(
+     "baseline", "6_mo", "one_year"
+), breaks = c(
+  "baseline", "6_mo", "one_year"
+),
+   labels = c(
+     "Baseline", "6-months", "1-year"
+   )) + 
+scale_color_manual(
+  values = c(
+    "exercise" = "#0072B2",
+     "stretching" = "#D55E00"
+  )
+) + 
+labs(y = expression(paste("Volume ", (mm^{3}))),
+     x = "", title = "Left hippocampus") + 
+theme_us_classic() + 
+theme(legend.key = element_blank(),
+      legend.title = element_blank(),
+      plot.title = element_text(size = 16),
+      legend.position = c(0,1),
+      legend.justification = c(-0.2,1.2))
+
+p2 <- ggplot(data, 
+       aes(x = treatment,
+           y = right_hippo,
+           color = group)) + 
+geom_line(aes(group = group),
+          size = 0.8) + 
+geom_point(size = 2.5,
+           show.legend = FALSE) + 
+scale_y_continuous(limits = c(4.6,5.2),
+            expand = c(0,0),
+            breaks = c(
+            4.6,4.7,4.8,4.9,5,5.1,5.2         
+                   ),
+            labels = c(
+             "4.6","4.7","4.8","4.9","5","5.1","5.2" 
+            )) +
+scale_x_discrete(limits = c(
+     "baseline", "6_mo", "one_year"
+), breaks = c(
+  "baseline", "6_mo", "one_year"
+),
+   labels = c(
+     "Baseline", "6-months", "1-year"
+   )) + 
+scale_color_manual(
+  values = c(
+    "exercise" = "#0072B2",
+     "stretching" = "#D55E00"
+  )
+) + 
+labs(y = expression(paste("Volume ", (mm^{3}))),
+     x = "", title = "Right hippocampus") + 
+theme_us_classic() + 
+theme(plot.title = element_text(size = 16),
+      legend.position = "none")
+
+
+
+p3 <- ggplot(data, 
+       aes(x = treatment,
+           y = left_caud,
+           color = group)) + 
+geom_line(aes(group = group),
+          size = 0.8) + 
+geom_point(size = 2.5,
+           show.legend = FALSE) + 
+scale_y_continuous(limits = c(4.4,4.8),
+            expand = c(0,0),
+            breaks = c(
+            4.4,4.5,4.6,4.7,4.8         
+                   )) +
+scale_x_discrete(limits = c(
+     "baseline", "6_mo", "one_year"
+), breaks = c(
+  "baseline", "6_mo", "one_year"
+),
+   labels = c(
+     "Baseline", "6-months", "1-year"
+   )) + 
+scale_color_manual(
+  values = c(
+    "exercise" = "#0072B2",
+     "stretching" = "#D55E00"
+  )
+) + 
+labs(y = expression(paste("Volume ", (mm^{3}))),
+     x = "", title = "Left caudate nucleus") + 
+theme_us_classic() + 
+theme(plot.title = element_text(size = 16),
+      legend.position = "none")
+
+p4 <- ggplot(data, 
+       aes(x = treatment,
+           y = right_caud,
+           color = group)) + 
+geom_line(aes(group = group),
+          size = 0.8) + 
+geom_point(size = 2.5,
+           show.legend = FALSE) + 
+scale_y_continuous(limits = c(4.8,5.3),
+            expand = c(0,0),
+            breaks = c(
+            4.8,4.9,5,5.1,5.2, 5.3         
+                   ),
+            labels = c(
+            "4.8","4.9","5","5.1",
+            "5.2","5.3"
+            )) +
+scale_x_discrete(limits = c(
+     "baseline", "6_mo", "one_year"
+), breaks = c(
+  "baseline", "6_mo", "one_year"
+),
+   labels = c(
+     "Baseline", "6-months", "1-year"
+   )) + 
+scale_color_manual(
+  values = c(
+    "exercise" = "#0072B2",
+     "stretching" = "#D55E00"
+  )
+) + 
+labs(y = expression(paste("Volume ", (mm^{3}))),
+     x = "", title = "Right caudate nucleus") + 
+theme_us_classic() + 
+theme(plot.title = element_text(size = 16),
+      legend.position = "none")
+
+p5 <- ggplot(data, 
+       aes(x = treatment,
+           y = thalamus,
+           color = group)) + 
+geom_line(aes(group = group),
+          size = 0.8) + 
+geom_point(size = 2.5,
+           show.legend = FALSE) + 
+scale_y_continuous(limits = c(13,15),
+            expand = c(0,0),
+            breaks = c(
+            13,13.5,14,14.5,15        
+                   ),
+            labels = c(
+            "13","13.5","14","14.5",
+            "15"
+            )) +
+scale_x_discrete(limits = c(
+     "baseline", "6_mo", "one_year"
+), breaks = c(
+  "baseline", "6_mo", "one_year"
+),
+   labels = c(
+     "Baseline", "6-months", "1-year"
+   )) + 
+scale_color_manual(
+  values = c(
+    "exercise" = "#0072B2",
+     "stretching" = "#D55E00"
+  )
+) + 
+labs(y = expression(paste("Volume ", (mm^{3}))),
+     x = "", title = "Thalamus") + 
+theme_us_classic() + 
+theme(plot.title = element_text(size = 16),
+      legend.position = "none")
+
+
+fig1 <- ggdraw() +
+  draw_image("images/hipo_fig.png")
+
+fig2 <- ggdraw() +
+  draw_image("images/caud_fig.png")
+
+fig3 <- ggdraw() +
+  draw_image("images/tha_fig.png")
+
+
+  
+fig_col <- plot_grid(fig1,fig2,fig3,
+          ncol = 1, labels = "AUTO",
+          label_size = 20)
+
+col2 <- plot_grid(
+  p1,p3,p5, ncol = 1
+)
+
+col3 <- plot_grid(
+  p2,p4,NULL, ncol = 1
+)
+
+final_figure <- plot_grid(fig_col,col2,col3,
+  ncol = 3, rel_widths = c(1,2,2),
+  rel_heights = c(1,1,1)) 
+
+final_figure
+
+```
+
+The cowplot package [@cw20] additionally allows you to combine graphs with images and create more complicated arrays. As you can see in Figure \@ref(fig:ft3), in addition to combining graphics, on the side there are images with examples of segmentation of the hippocampus, caudate nucleus and thalamus. This action is thanks to the combination of the functions `ggdraw() + draw_image()`. Before inserting an image, make sure you have the magick package installed.
+
+
+```{block2, fac, type='rmdtip'}
+
+__Want to know more?__
+
+- **Cowplot** helps you create publication-quality figures, such as a set of themes, functions for aligning graphs and arranging them into complex composite figures, and functions that make it easy to annotate graphs or combine graphs with images [@cw20].
+
+- **Patchwork** allows users to combine graphics using simple mathematical operations such as `+` and `/` [@tp20].
+
+- The **gridExtra** package has the `grid.arrange()` function and is another solution for mixing multiple shapes.
+
+- The **aplot** package provides utilities for subplot alignments associated with a main plot on different sides (left, right, top and bottom) with exactly matched axes [@gyu20]. 
+
+```
+
+
+## In conclusion 
+
+In this chapter we have dealt with the two types of panel figures. The first known as “small multiples” figures are composed of multiple panels and each panel represents a subset of the data. Small panel plots are displayed as a single type of plot. The second is known as “composite or combined figures”, i.e. taking several individual plots and arranging them into rows and columns. In addition, usually each panel displays a different chart. Depending on the two types of figures you want to display, don't forget to adjust your legend or titles strategically and thus facilitate the visualization. 
+
+
+## To practice!
+
+### Exercise 1
+
+
+We will use a dataset from a cross-sectional study of the gut microbiome of 1,820 adults (1,801 women and 19 men) from Burkina Faso, Ghana, Kenya and South Africa [@Maghini2025]. We will recreate *Figure 1e* from the original publication, using the `facet_grid()` function. 
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        ggtext)
+
+fig1 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1e") %>%
+       dplyr::rename(
+         log10 = "log10(rel.ab)"
+       )
+
+fig1$genus <- factor(fig1$genus, 
+  levels = c("g__Phocaeicola","g__Bacteroides",
+              "g__Bifidobacterium","g__Prevotella",
+            "g__Cryptobacteroides", "g__Oribacterium",
+            "g__Treponema_D"))
+
+label_genus <- c("<br>*Phocaeicola*<br>", "<br>*Bacteroides*<br>",
+              "<br>*Bifidobacterium*<br>", "<br>*Prevotella*<br>" ,
+              "<br>*Cryptobacteroides*<br>", "<br>*Oribacterium*<br>",
+                "<br>*Treponema_D*<br>")
+
+names(label_genus) <- c("g__Phocaeicola","g__Bacteroides",
+                        "g__Bifidobacterium","g__Prevotella",
+                      "g__Cryptobacteroides", "g__Oribacterium",
+                     "g__Treponema_D")
+
+```
+
+
+### Exercise 2
+
+From the above data set, you are going to recreate the graphs in *Figure 1a* (without the map), *Figure 1b*, *Figure 1e* (from the previous exercise), join them together and label them alphabetically. You can use the **Cowplot** package.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        ggtext)
+
+fig1 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1e") %>%
+       dplyr::rename(
+         log10 = "log10(rel.ab)"
+       )
+
+fig2 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1a") %>%
+        dplyr::rename(
+          samples = "Number of samples"
+        )
+
+fig2$Site <- factor(fig2$Site, 
+  levels = c(
+    "Agincourt", "Nanoro", "Nairobi",
+    "Navrongo", "Soweto", "Dimamo"
+  ))
+
+
+fig3 <- read_xlsx(path = 
+        "data/Chapter11/fig1_micro_afri.xlsx",
+       col_names = TRUE, sheet = "Fig1b")
+
+
+```
+

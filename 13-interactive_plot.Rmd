@@ -1,0 +1,308 @@
+# (PART\*) Part IV: Additional topics {-} 
+
+#  Interactive plots {#interactive}
+
+
+Throughout the book, we have created static figures with design adjustments (using examples) with the main goal of enabling you to produce your own high-quality figures for publication in theses, articles, books, posters, and presentations. However, interactive figures offer greater opportunities for exploration and reader engagement, and their full potential can be leveraged in Hypertext Markup Language (HTML) files.
+
+In this chapter we will focus on the plotly and gganimate packages; with simple and pointed approaches on how to generate these interactive figures.
+
+
+## Plotly
+
+Plotly is an R package for creating interactive web-based graphics through the JavaScript ([plotly.js](https://github.com/plotly/plotly.js)) graphics library . There are two ways to generate interactive plotly object plots: either directly with the `plot_ly()/plot_geo()/plot_mapbox()` functions or transform a ggplot2 object with the `ggplotly()` function. This time we will focus on the second option. If you want to learn more about the potential of this package, we recommend you to consult the book *Interactive Web-Based Data Visualization with R, Plotly, and Shiny* by @Carson20.
+
+(ref:plty) Line graph showing global temperature change from 1980 - 2024. This figure shows an interactive graph and hovering the mouse over the line shows you the data information. Source data: NASA/GISS. 
+
+```{r plty, out.width='100%',dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:plty)', fig.align='center'}
+
+knitr::include_graphics(rep("images/plotly.png"))
+```
+
+Figure \@ref(fig:plty) illustrates the change in global surface temperature relative to the long-term "normal" average from 1951 to 1980, based on standards from NASA and the U.S. National Weather Service. In 2024, Earth's average surface temperature reached 1.28°C, marking the warmest year on record since temperature measurements began in 1880 ([NASA/GISS](https://climate.nasa.gov/vital-signs/global-temperature/?intent=121)). As you can see, the chart is interactive, and hovering over the line reveals data details. Additionally, in the top right corner, there are toolbar options that allow you to drag the chart (by holding Shift and the left mouse button), zoom in, reset the axes, and download the image as a PNG file. 
+
+After converting your chart into a **plotly** object using the `ggplotly()` function, you can make some enhancements, such as adding a title and subtitle to the chart. It’s recommended to add these elements after creating the *plotly object*. In our example (Figure \@ref(fig:plty)), we used the `title` argument within the `layout()` function to include the title and subtitle. Finally, the chart was saved in HTML format using the `saveWidget()` function from the **htmlwidgets** package.
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        plotly,
+        htmlwidgets)
+
+temperature_data <- read_xlsx(
+  path = "data/Chapter13/tem_data.xlsx",
+  col_names = TRUE
+)
+
+p <- ggplot(temperature_data,
+       aes(x = year,
+           y = annual_mean)) +
+geom_hline(yintercept = 0, 
+           linetype = "solid",
+           size = 0.5, color = "gray50") +
+geom_line(size = 1,
+          color = "#0072B2") + 
+scale_x_continuous(breaks = c(
+  1880,1900,1920,1940,1960,1980,2000,
+  2024), 
+  labels = c(
+  "1880","1900","1920","1940","1960","1980","2000",
+  "2020-2024" 
+  ),
+  name = "") +
+scale_y_continuous(breaks = c(
+  0, 0.5,1
+), labels = c(
+  "0°C", "0.5°C", "1°C"
+)) + 
+  coord_cartesian(
+  xlim = c(1880,2038), 
+  clip = "off", 
+  expand = FALSE) + 
+  labs(y = "Temperature anomaly (°C)") + 
+  theme_us_classic() + 
+  theme(plot.title.position = "plot",
+        plot.title = element_text(size = 20,
+        face= "bold", family = "serif"), 
+        plot.subtitle = element_text(
+          size = 16, family = "serif"
+        ))
+
+ggplotly(p) %>%
+   layout(title = list(text = paste0(
+     '<b>Last 10 years warmest on record </b>',
+      '<br>',
+      '<sup>',
+      'Global temperature change,1880-2024','</sup>'),
+     x = 0, xref = "container", 
+     y = 1.3 , yanchor = "top",
+     pad = list(t = 20, l = 10, b= 10))) %>%
+     saveWidget("temperature_line.html")
+
+```
+
+## gganimate
+
+It is an extension of ggplot2 designed to create animated ggplots [@pedersen20]. In Figure \@ref(fig:animate), we present a line chart illustrating global temperature changes from 1980 to 2024. Each frame displays the increase in temperature as the years progress.
+
+(ref:animate) Line graph showing global temperature change from 1980 - 2024. The static graph made in ggplot2 was changed to an animated graph using the gganimate functions. 
+
+```{r animate, out.width='100%', dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:animate)', fig.align='center'}
+
+knitr::include_graphics(rep("images/temp.png"))
+
+```
+
+Animations show subsets of a data set at different times, so the ideal is to make a static graph of the data, without title, subtitles or footnotes. Then give it animation and finally enhance the design. 
+
+The `transition_reveal()` function was the basis for the animation of the graph. This function allows to let the data appear gradually, depending on a given time dimension. Moreover, it keeps the data visible until the end of the animation. Additionally, we performed a trick to show the year each time the line advances and we used the `geom_label()` function to create labels for the years. \index{geom\_label function}
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        gganimate,
+        )
+
+temperature_data <- read_xlsx(
+  path = "data/Chapter13/tem_data.xlsx",
+  col_names = TRUE
+) %>%
+  mutate(
+    year = as.integer(year)
+  )
+
+p <- ggplot(temperature_data,
+       aes(x = year,
+           y = annual_mean)) +
+geom_hline(yintercept = 0, 
+           linetype = "solid",
+           size = 0.5, color = "gray50") +
+geom_point(color = "#0072B2", size = 2) + 
+geom_line(aes(group = 1), size = 1,
+          color = "#0072B2") + 
+geom_label(aes(
+  label = year), x = 2033, y = 1.25,
+  fill = "white", label.size = NA,
+  size = 12, size.unit = "pt", color = "gray50",
+  fontface = "bold", alpha = 1) + 
+scale_x_continuous(breaks = c(
+  1880,1900,1920,1940,1960,1980,2000,
+  2024), 
+  labels = c(
+  "1880","1900","1920","1940","1960","1980","2000",
+  "2020-2024" 
+  ),
+  name = "") +
+scale_y_continuous(breaks = c(
+  0, 0.5,1
+), labels = c(
+  "0°C", "0.5°C", "1°C"
+)) + 
+  coord_cartesian(
+  xlim = c(1880,2038), 
+  clip = "off", 
+  expand = FALSE) + 
+  theme_us_classic()
+  
+anim <- p +  
+        transition_reveal(year) +
+        labs(y = "Temperature anomaly (°C)",
+       title = "Last 10 years warmest on record", 
+       subtitle = "Global temperature change,1880-2024",
+       caption = "Source data: NASA/GISS") + 
+        theme(plot.title.position = "plot",
+        plot.caption.position = "plot",
+        plot.caption = element_text(
+          size = 10, color = "gray50",
+          family = "serif", hjust = 0
+        ),
+        plot.title = element_text(size = 24,
+        face= "bold", family = "serif"), 
+        plot.subtitle = element_text(
+          size = 16, family = "serif", color = "gray40"
+        ))
+        
+animate(anim, width = 6, height = 4.66, units = "in", res = 300,
+        nframes = 25, fps = 3)
+
+anim_save("temperature_NASA.gif")
+
+
+```
+
+
+Then, we add the titles to the graphic and save the object `gganimate()` with the name “anim”. To visualize the animation and adjust some parameters, such as width, height and number of frames, we used the `animate()` function. \index{animate, gganimate} Finally, the complete animation of the graphic was saved in GIF format using the `anim_save()` function.
+
+## In conclusion 
+
+In this chapter, we have learned how to create interactive graphics, both static and animated. Starting with a ggplot2 object, it is possible to convert it into a plotly object, resulting in an interactive graphic without movement. On the other hand, if you want to add movement, the functions in the gganimate package will allow you to do so. Both approaches improve data exploration and encourage greater reader engagement.
+
+
+## To practice!
+
+
+### Exercise 1
+
+For this exercise you will use the data set on the consistently early flowering of sakura or cherry blossom trees in Kyoto [@aono].
+
+(ref:exin1) Line graph showing how Japanese cherry trees have been blooming earlier due to warmer spring temperatures. The data shown is not current, however, the updated data continues to show the same trend. Updated data at: Our World in Data
+
+```{r exin1, out.width='100%', fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:exin1)', fig.align='center'}
+knitr::include_graphics(rep("images/sakura_fig.png"))
+```
+
+First you are going to make the plot as a ggplot2 object and then transform it into a plotly object with the `ggplotly()` function. The result should be similar to Figure \@ref(fig:exin1).
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        lubridate,
+        plotly,
+        ggtext,
+        htmlwidgets
+        )
+
+sakura <- read_xls(
+  path = "data/Chapter13/KyotoFullFlower7.xls",
+  col_names = TRUE) %>%
+  rename(
+    full_flowering_date = "Full-flowering date",
+    full_flowering_date_doy = "Full-flowering date (DOY)",
+    source_code = "Source code",
+    data_type_code = "Data type code",
+    reference_name = "Reference Name"
+  )
+
+sakura <- sakura %>%      #Clean data
+          dplyr::filter(
+          !is.na(full_flowering_date)) 
+
+colnames(sakura) <- sakura %>% 
+  colnames() %>% 
+  str_to_lower() %>%        
+  str_replace_all("\\.", "_") 
+
+
+sakura <- sakura %>% 
+  select(-full_flowering_date_doy, -data_type_code, 
+         -reference_name, -source_code)
+
+sakura <- sakura %>%
+          rename(
+            year = ad
+          ) %>%
+          mutate(
+            year = as.integer(year)
+          )
+
+# separate “full_flowering_date"
+
+date_flower <- as.character(sakura$full_flowering_date) %>% 
+  str_replace_all("(.{1})(.*)", "\\1.\\2") %>% 
+  as_data_frame()
+
+colnames(date_flower)[1] <- "date_fl"
+
+date_flower <- date_flower %>% 
+               separate(date_fl, c("month", "day"), 
+                "\\.")  
+
+sakura <- bind_cols(date_flower, sakura) # combine
+
+sakura <- sakura %>% 
+  mutate(bloom = make_date(year, month, day),
+  day_of_year = as.numeric(
+  format(bloom, "%j"))) %>% # %j: decimal day of the year
+  select(-full_flowering_date)  
+
+```
+
+
+### Exercise 2
+
+You will use a dataset on global emissions of pollutants from 1750 to 2022 ([CEDS](https://ourworldindata.org/grapher/long-run-air-pollution)). You will create an animated line graph. Remember to use the gganimate package.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        ggtext,
+        gganimate
+        )
+
+order_gases <- c(
+  "nitrogen_oxide", "sulphur_dioxide",
+  "carbon_monoxide", "black_carbon",
+  "ammonia", "non_methane")
+
+air_pollution <- read.csv(file = 
+            "data/Chapter13/air_pollution.csv", 
+            header = TRUE,  sep=",") %>%
+    tidyr::pivot_longer(
+    cols = c(nitrogen_oxide,sulphur_dioxide,
+    carbon_monoxide, black_carbon,
+     ammonia,non_methane),
+     names_to = "gases",
+    values_to = "count"
+      ) %>%
+     dplyr::select(-code) %>%
+     mutate(gases = as.factor(gases),
+    gases = fct_relevel(gases, (order_gases)))
+
+
+
+```
+

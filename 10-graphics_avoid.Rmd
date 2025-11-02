@@ -1,0 +1,1152 @@
+# Graphics to avoid {#graphics-avoid}
+
+In the publications, one can observe the authors' attempt to present the data in “attractive” graphs. In reality, most of these graphs tend to distort or confuse readers when interpreting the data.
+
+In this chapter we will analyze a series of graphs that should be avoided. These types of graphical representations fail to fulfill their essential purpose: to convey data clearly and concisely.  We will discuss contour plots and fill patterns, plots displayed in 3D, and plots with two vertical axes. We will explain why their use should be limited.
+
+## Contour and fill pattern graphics {#contour-pattern}
+
+Noticed in some publications that some graphs, especially bar plots and histograms, are presented with colored outlines only. While this may seem like an interesting strategy to reduce ink usage, it is important to remember that the primary purpose of a graph is to communicate data clearly and effectively. Therefore, this practice of outlining graphs can introduce visual noise and make it difficult to interpret the information.
+
+(ref:cr1) An individual's monthly activity and sleep quality between January 2015 and December 2016. The individual's activities are represented by grouped bars outlined in different colors. The colored outlines plus the white space between the bars is visually distracting. Error bars show the mean ± sd. Data source: @pamies20. 
+
+```{r cr1, fig.width = 7*5/3.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:cr1)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse
+  )
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        scales)
+
+data <- read_xlsx(path = 
+        "data/Chapter10/individuals_activity.xlsx",
+         col_names = TRUE)
+
+data$activity <- factor(data$activity, 
+  levels = c("walking","steps_taken","flight","sleep_quality"))
+
+color <- c("#E69F00", "#0072B2","#009E73","#CC79A7")
+
+ggplot(data, aes(x = month_year, 
+              y= repetition)) + 
+geom_bar(aes(color = activity ), stat = "summary", fun = "mean", 
+          position = position_dodge(0.8), fill = "white",
+          alpha = 0, width = 0.7, size = 1) + 
+stat_summary(aes(group = activity, y = repetition,
+              color = activity),
+      fun.y = mean,fun.ymin = function(x) mean(x), 
+      fun.ymax = function(x) mean(x) + sd(x), size = 0.7,
+      geom = "errorbar", position = position_dodge(0.8),
+      width = 0.2, show.legend = FALSE) + 
+scale_color_manual(values = color,
+        breaks = c("walking","steps_taken",
+                   "flight","sleep_quality"),
+        labels = c("Walking and running distance",
+                   "Steps taken", "Flights of stairs climbed",
+                   "Sleep quality")) + 
+scale_y_continuous(limits = c(0,100),
+        expand = c(0,0),
+        labels = scales::percent_format(
+        accuracy = 1, scale = 1)) +
+scale_x_discrete(limits = c("Jan-Apr 2015",
+        "May-Aug 2015", "Sep-Dec 2015",
+         "Jan-Apr 2016","May-Aug 2016", 
+         "Sep-Dec 2016" )) + 
+labs (x = "", y = "Perfomance") + 
+theme_us_classic() + 
+theme(legend.title = element_blank(),
+      legend.position = "top",
+      legend.justification = "left",
+      plot.margin = margin(3.5, 14, 3.5, 1.5))
+
+
+```
+
+Let's look at an example illustrated in Figure \@ref(fig:cr1), where bars are grouped and outlined with different colors to represent certain activities of a person between january 2015 and december 2016 [@pamies20]. The combination of the colored outlines and the white space between the bars creates a visual distraction. Likewise, in his book Fundamentals of Data Visualization, Claus O. Wilke mentions: "When there are gaps between bars, we end up with a confusing visual pattern that detracts from the main message" [@claus5]. Therefore, avoid making contoured graphics. 
+
+Solid shapes, strategically colored, are easier to interpret and stand out for their clarity and accuracy in representing the data. Let's take a look at Figure \@ref(fig:solid).
+
+In Figure \@ref(fig:solid), the bars are filled with colors, while the error bars are presented in gray, with the purpose of keeping them in the background to avoid visually competing with the bar colors. In my opinion, it is recommended that the error bars be kept in shades of gray or black. This is in contrast to Figure \@ref(fig:cr1), where the error bars shared the same color as the main bars, which was distracting and made it difficult to compare the data.
+
+(ref:solid) An individual's monthly activity and sleep quality between January 2015 and December 2016. Unlike Figure \@ref(fig:cr1), the bars are solid shapes and are filled with colors according to the activities. In addition, the error bars (mean ± sd) are grayed out to avoid visually competing with the bar colors. Data source: @pamies20. 
+
+```{r solid, fig.width = 7*5/3.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap = '(ref:solid)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        scales)
+
+data <- read_xlsx(path = 
+        "data/Chapter10/individuals_activity.xlsx",
+         col_names = TRUE)
+
+data$activity <- factor(data$activity, 
+  levels = c("walking","steps_taken","flight","sleep_quality"))
+
+color <- c("#E69F00", "#0072B2","#009E73","#CC79A7")
+
+ggplot(data, aes(x = month_year, 
+              y= repetition)) + 
+stat_summary(aes(group = activity, y = repetition),
+      fun.y = mean,fun.ymin = function(x) mean(x), 
+      fun.ymax = function(x) mean(x) + sd(x), size = 0.7,
+      geom = "errorbar", position = position_dodge(0.8),
+      width = 0.2, color = "gray50" ,show.legend = FALSE) + 
+geom_bar(aes(fill = activity), stat = "summary", 
+         fun = "mean", position = position_dodge(0.8),
+         width = 0.7, size = 1) + 
+scale_fill_manual(values = color,
+        breaks = c("walking","steps_taken",
+                   "flight","sleep_quality"),
+        labels = c("Walking and running distance",
+                   "Steps taken", "Flights of stairs climbed",
+                   "Sleep quality")) + 
+scale_y_continuous(limits = c(0,100),
+        expand = c(0,0),
+        labels = scales::percent_format(
+        accuracy = 1, scale = 1)) +
+scale_x_discrete(limits = c("Jan-Apr 2015",
+        "May-Aug 2015", "Sep-Dec 2015",
+         "Jan-Apr 2016","May-Aug 2016", 
+         "Sep-Dec 2016" )) + 
+labs (x = "", y = "Perfomance") + 
+theme_us_classic() + 
+theme(legend.title = element_blank(),
+      legend.position = "top",
+      legend.justification = "left",
+      plot.margin = margin(3.5, 14, 3.5, 1.5))
+
+
+```
+
+However, in some cases contour plots are generated where the data are represented in the background by dots. This option can be useful as a last resort, especially in relatively small samples. In Figure \@ref(fig:ct2), contoured bars are presented with the background data represented as dots, in addition to including the error bars.
+
+(ref:ct2) An individual's monthly activity and sleep quality between January 2015 and December 2016.Bars outlined with different colors, and in the background the distribution of the data is shown by gray dots. Error bars show the mean ± sd. Data source: @pamies20. 
+
+```{r ct2, fig.width = 7*5/3.2, fig.asp = 0.7,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:ct2)',fig.align='center'}
+
+library(tidyverse)
+library(readxl)
+library(scales)
+
+
+data <- read_xlsx(path = 
+        "data/Chapter10/individuals_activity.xlsx",
+         col_names = TRUE)
+
+data$activity <- factor(data$activity, 
+  levels = c("walking","steps_taken","flight","sleep_quality"))
+
+color <- c("#E69F00", "#0072B2","#009E73","#CC79A7")
+
+ggplot(data, aes(x = month_year, 
+              y= repetition)) + 
+geom_jitter(aes(group = activity),color = "gray50" ,
+            position = position_dodge(0.8),
+            size= 2.5, alpha = 0.5) + 
+geom_bar(aes(color = activity ), stat = "summary", fun = "mean", 
+          position = position_dodge(0.8), fill = "white",
+          alpha = 0, width = 0.7, size = 1) + 
+stat_summary(aes(group = activity, y = repetition),
+      fun.y = mean,fun.ymin = function(x) mean(x), 
+      fun.ymax = function(x) mean(x) + sd(x), size = 0.7,
+      geom = "errorbar", position = position_dodge(0.8),
+      width = 0.2, color = "gray20" ,show.legend = FALSE) + 
+scale_color_manual(values = color,
+        breaks = c("walking","steps_taken",
+                   "flight","sleep_quality"),
+        labels = c("Walking and running distance",
+                   "Steps taken", "Flights of stairs climbed",
+                   "Sleep quality")) + 
+scale_y_continuous(limits = c(0,100),
+        expand = c(0,0),
+        labels = scales::percent_format(
+        accuracy = 1, scale = 1)) +
+scale_x_discrete(limits = c("Jan-Apr 2015",
+        "May-Aug 2015", "Sep-Dec 2015",
+         "Jan-Apr 2016","May-Aug 2016", 
+         "Sep-Dec 2016" )) + 
+labs (x = "", y = "Perfomance") + 
+theme_us_classic() + 
+theme(legend.title = element_blank(),
+      legend.position = "top",
+      legend.justification = "left",
+      plot.margin = margin(3.5, 14, 3.5, 1.5))
+
+```
+
+As you can see, the sample of this research is relatively small, so representing the data using bar charts is not the best option. Keep in mind that bar charts can be misleading, especially when dealing with small samples, as they tend to hide patterns in the data and do not allow you to identify outliers.
+
+A more suitable visual alternative is shown in Figure \@ref(fig:ct3). In this figure, we chose to eliminate the error bars, as we present the full distribution of the data in the background. In addition, we represented the mean with solid dots, which we then connected by lines. Finally, the activities were separated into individual panels for better visualization.
+
+The line graph is a very good option, because it easily shows the individual's activities over time, it has a cleaner design than grouped bars and consumes less ink. 
+
+(ref:ct3) An individual's monthly activity and sleep quality between January 2015 and December 2016. The activities were separated into individual panels, and the mean is shown as solid dots connected by lines and the distribution of all data is shown at the bottom. Data source: @pamies20.
+
+```{r ct3, fig.width = 5.5*8/3.5, fig.asp = 0.65,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:ct3)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        readxl,
+        scales)
+
+data <- read_xlsx(path = 
+        "data/Chapter10/individuals_activity.xlsx",
+         col_names = TRUE)
+
+data$activity <- factor(data$activity, 
+  levels = c("walking","steps_taken","flight","sleep_quality"))
+
+label_ac <- c("Walking and running distance",
+              "Steps taken", 
+              "Flights of stairs climbed",
+                "Sleep quality")
+names(label_ac) <- c("walking","steps_taken","flight","sleep_quality")
+
+
+color <- c("#E69F00", "#0072B2","#009E73","#CC79A7")
+
+label_x <- c("Jan-Apr \n2015", "May-Aug \n2015",
+             "Sep-Dec \n2015", "Jan-Apr \n2016",
+             "May-Aug \n2016", "Sep-Dec \n2016")
+
+ggplot(data, aes(x = month_year, 
+              y= repetition)) + 
+geom_jitter(aes(group = activity),color = "gray50" ,
+            position = position_dodge(0.8),
+            size= 2.5, alpha = 0.5) + 
+stat_summary(aes(group = activity, y =repetition),
+     fun.y = mean, geom = "line",
+     color= "#0072B2", size = 1) + 
+stat_summary(aes(group = activity, y = repetition),
+             fun.y = mean, geom = "point",
+             position = position_dodge(0.8), shape = 21,
+             size = 3.5, color = "white", width = 0.5,
+             fill = "#0072B2") + 
+facet_wrap(~activity, scales = "free", ncol = 2,
+           labeller = labeller(activity = label_ac)) + 
+scale_y_continuous(limits = c(0,100),
+        expand = c(0,0),
+        labels = scales::percent_format(
+        accuracy = 1, scale = 1)) +
+scale_x_discrete(limits = c("Jan-Apr 2015",
+        "May-Aug 2015", "Sep-Dec 2015",
+         "Jan-Apr 2016","May-Aug 2016", 
+         "Sep-Dec 2016"), 
+         breaks = c("Jan-Apr 2015",
+        "May-Aug 2015", "Sep-Dec 2015",
+         "Jan-Apr 2016","May-Aug 2016", 
+         "Sep-Dec 2016"), 
+          labels = label_x) + 
+labs (x = "", y = "Perfomance") + 
+theme_us_classic() + 
+theme(legend.title = element_blank(),
+      legend.position = "none",
+      strip.text = element_text(size = 14,
+      hjust = 0, 
+      margin = margin(7, 7, 3, 7)),
+      strip.background  = element_rect(
+        fill = "grey85", colour = "grey85",
+        linetype = 1, size = 0.25),
+      panel.spacing.x = grid::unit(14, "pt"),
+      axis.title.y = element_text(hjust = 1),
+      plot.margin = margin(3.5, 14, 3.5, 1.5))
+
+
+```
+
+Note that descriptive statistics, such as mean, standard error or standard deviation, are only relevant when there is a sufficient amount of data to summarize. For medium-sized data sets, dot plots can be supplemented with box plots or violin plots. However, when the volume of data is very large, a dot plot can be overwhelming. In these cases, it is preferable to use only box plots, violin plots or histograms [@Riedel20]. 
+
+Dot plots can also use contours using shapes such as open circles, triangles, squares, among others. Figure \@ref(fig:point0) shows a list of different point shapes that can be used. This use of contoured points is common in scatter plots and strip plots. For example, Figure \@ref(fig:pct1) presents a scatter plot exploring the relationship between flipper length and body mass in different penguin species [@allison20]. In this case, each species is represented by a different contoured dot shape, and in black. However, this choice creates visual distraction, as the focus shifts to identifying which dot is superimposed on another, diverting attention from the main objective: determining whether there is a positive relationship between flipper length and body mass.
+
+(ref:pct1) Body mass as a function of fin length in three species of penguins. The different shapes of contoured and single-colored dots cause visual distraction. 
+
+```{r pct1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:pct1)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        palmerpenguins)
+
+data_clean <- penguins
+
+# function: count_na
+
+count_na <- function (a){
+counts <- sapply(a,function (x) sum(is.na(x)))
+data.frame(counts)
+}
+
+# count_na(data_clean)
+
+
+## replacing nulls
+
+cal_mean <- function (a,b){
+as.double(round(mean(a, na.rm=TRUE),b))
+}
+
+
+# bill_depth_mm
+data_clean$bill_depth_mm[is.na(data_clean$bill_depth_mm)] <- cal_mean(data_clean$bill_depth_mm,1)
+# bill_length_mm
+data_clean$bill_length_mm[is.na(data_clean$bill_length_mm)] <- cal_mean(data_clean$bill_length_mm,1)
+# flipper_length_mm
+data_clean$flipper_length_mm[is.na(data_clean$flipper_length_mm)] <- cal_mean(data_clean$flipper_length_mm,0)
+data_clean$body_mass_g[is.na(data_clean$body_mass_g)] <- cal_mean(data_clean$body_mass_g,0)
+
+
+data_clean <- na.omit(data_clean) 
+
+ggplot(data_clean, aes(x = flipper_length_mm,
+                     y = body_mass_g)) + 
+geom_point(aes(shape = species), 
+           size = 3, color ="black") + 
+labs(x = "Flipper length (mm)",
+       y = "Body mass (g)",
+       color = "Penguin species",
+       shape = "Penguin species") +
+scale_shape_manual(values = c(21,24,22)) +
+theme_us_classic() + 
+theme(legend.key = element_blank(),
+      legend.position = c(0, 1),
+      legend.justification = c(-0.2, 1))
+
+```
+
+A suitable alternative would be to use solid dots, as they are more visually appealing. In Figure \@ref(fig:pct2), we made some adjustments: the solid dots were filled with different colors to facilitate the distinction between the three species. In addition, transparency (`alpha`) was set to reduce the overlap of the dots. Last but not least, a general reference line was added to help identify whether there is a positive relationship or not.
+
+(ref:pct2) Body mass as a function of fin length in three species of penguins. The solid dots with transparent colors and different shapes allow us to clearly differentiate the three species of penguins. 
+
+```{r pct2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:pct2)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        palmerpenguins)
+
+data_clean <- penguins
+
+# function: count_na
+
+count_na <- function (a){
+counts <- sapply(a,function (x) sum(is.na(x)))
+data.frame(counts)
+}
+
+# count_na(data_clean)
+
+
+## replacing nulls
+
+cal_mean <- function (a,b){
+as.double(round(mean(a, na.rm=TRUE),b))
+}
+
+
+# bill_depth_mm
+data_clean$bill_depth_mm[is.na(data_clean$bill_depth_mm)] <- cal_mean(data_clean$bill_depth_mm,1)
+# bill_length_mm
+data_clean$bill_length_mm[is.na(data_clean$bill_length_mm)] <- cal_mean(data_clean$bill_length_mm,1)
+# flipper_length_mm
+data_clean$flipper_length_mm[is.na(data_clean$flipper_length_mm)] <- cal_mean(data_clean$flipper_length_mm,0)
+data_clean$body_mass_g[is.na(data_clean$body_mass_g)] <- cal_mean(data_clean$body_mass_g,0)
+
+
+data_clean <- na.omit(data_clean) 
+
+ggplot(data_clean, aes(x = flipper_length_mm,
+                     y = body_mass_g)) +
+geom_point(aes(shape = species,
+           color = species,
+           fill = species), 
+           size = 3, alpha = 0.5) +
+geom_smooth(method = "lm",
+            se = FALSE, color = "gray50") +
+labs(  title = "Penguin species",
+       x = "Flipper length (mm)",
+       y = "Body mass (g)") +
+scale_shape_manual(values = c(21,24,22)) +
+scale_color_manual(values = c("#56B4E9", "#E69F00", 
+                    "#009E73")) + 
+scale_fill_manual(values = c("#56B4E980", "#E69F0080", 
+                    "#009E7380")) + 
+annotate("text",x = 185, y =4890, label = "Adelie",
+          parse = TRUE, color = "#56B4E9", 
+          size = 14/.pt) + 
+annotate("text",x = 204, y =3200, label = "Chinstrap",
+          parse = TRUE, color = "#E69F00", 
+          size = 14/.pt) + 
+annotate("text",x = 215, y =6200, label = "Gentoo",
+          parse = TRUE, color = "#009E73", 
+          size = 14/.pt) + 
+theme_us_classic() + 
+theme(legend.key = element_blank(),
+      legend.position = "none",
+      plot.title = element_text(size = 16,
+          color = "gray50"))
+
+```
+
+Another effective option to avoid overlapping points is to split the data into small panels. In Figure \@ref(fig:point-contour3), the data were separated by species into individual panels. In addition, only one dot shape and color was used, which is sufficient to convey the information. This makes it possible to clearly observe the differences in size between the three species, with the Gentoo penguin being the largest.
+
+(ref:point-contour3)  Body mass as a function of flipper length in three species of penguins. Each species is represented by individual panels.
+
+```{r point-contour3, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:point-contour3)',fig.align='center'}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        palmerpenguins)
+
+data_clean <- penguins
+
+# function: count_na
+
+count_na <- function (a){
+counts <- sapply(a,function (x) sum(is.na(x)))
+data.frame(counts)
+}
+
+# count_na(data_clean)
+
+
+## replacing nulls
+
+cal_mean <- function (a,b){
+as.double(round(mean(a, na.rm=TRUE),b))
+}
+
+
+# bill_depth_mm
+data_clean$bill_depth_mm[is.na(data_clean$bill_depth_mm)] <- cal_mean(data_clean$bill_depth_mm,1)
+# bill_length_mm
+data_clean$bill_length_mm[is.na(data_clean$bill_length_mm)] <- cal_mean(data_clean$bill_length_mm,1)
+# flipper_length_mm
+data_clean$flipper_length_mm[is.na(data_clean$flipper_length_mm)] <- cal_mean(data_clean$flipper_length_mm,0)
+data_clean$body_mass_g[is.na(data_clean$body_mass_g)] <- cal_mean(data_clean$body_mass_g,0)
+
+data_clean <- na.omit(data_clean) 
+
+ggplot(data_clean, aes(x = flipper_length_mm,
+                     y = body_mass_g)) +
+geom_point(shape = 21,
+           color = "#56B4E9",
+           fill = "#56B4E980", 
+           size = 3, alpha = 0.5) + 
+geom_smooth(method = "lm",
+            se = FALSE, color = "gray50") + 
+scale_x_continuous(limits = c(170,230)) + 
+scale_y_continuous(limits = c(3000,6000),
+                   breaks = c(3000, 4000,
+                    5000, 6000), 
+                   labels = c(
+                     "3kg", "4kg","5kg",
+                     "6kg")) +
+facet_wrap(~species, ncol = 3, 
+           scales = "free") + 
+labs(x = "Flipper length (mm)",
+       y = "Body mass (kg)") + 
+theme_us_classic() + 
+theme(strip.text = element_text(size = 14,
+      hjust = 0), 
+      strip.background  = element_rect(
+        fill = "grey85", colour = "grey85",
+        linetype = 1, size = 0.25),
+      axis.title.y = element_text(hjust = 1),
+      axis.title.x = element_text(hjust = 0))
+
+
+```
+
+
+Line graphs and density plots are also not exempt from the contouring problem. Figure \@ref(fig:line-cont1) presents a line graph illustrating the trend in the number of children's lives saved by vaccination against diseases such as measles, pertussis, tetanus, tuberculosis, polio, among others, during the period 1974 to 2024 [@Shattock20]. In the graph, the lines were organized according to each WHO region and distinguished by colors and line styles. However, the use of dashed lines to represent main data or trends is not advisable, as they can be confusing, especially when they intersect. In addition, this design requires repeated reference to the legend to identify to which group each dashed line corresponds, which increases the visual burd. The best use of dashed lines would be to show secondary data such as average, projections or to indicate something that is not a primary focus.
+
+(ref:line-cont1)  Cumulative number of lives saved from childhood vaccines since 1974. Using different styles of dashed lines to display primary data does not improve the visual perception of your data. 
+
+```{r line-cont1, fig.width = 5.5*6/4.2, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:line-cont1)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   scales
+  )
+
+data <- read.csv(
+"data/Chapter10/cumulative_lives_vaccination.csv"
+)
+
+data <- data %>% 
+        select(-Code) %>%
+        rename(
+         cumulative = cumulative_deaths_averted_vaccination
+        )
+
+ggplot(data, aes(
+  x = Year, y =cumulative 
+)) + 
+stat_summary(aes(group =Entity,
+              color = Entity, linetype = Entity), 
+             geom = "line", 
+             fun = mean, size = 0.8) +
+scale_x_continuous(
+               breaks = c(1974,1982,1990,
+                              1998,2006, 2014,2024),
+               labels = c("1974", "1982","1990",
+                        "1998","2006","2014",
+                        "2023-2024")) + 
+scale_y_continuous(expand = c(0,0),
+                   limits = c(0,60000000),
+                   breaks = c(
+                     0,20000000, 40000000 ,
+                     60000000
+                   ), 
+                   labels = c(
+                     "0", "20M",
+                     "40M", "60M")
+                   ) + 
+scale_color_manual(values = c(
+           "Africa" = "#0072B2",
+           "Americas" = "#D55E00",
+           "Europe" =  "#000000",
+           "South-East Asia" = "#CC79A7", 
+            "Western Pacific" = "#000000", 
+            "Eastern Mediterranean" = "#000000"
+                 )) + 
+scale_linetype_manual(values = c(
+          "Africa" = "solid",
+          "Americas" = "solid",
+          "Europe" =  "dotdash",
+          "South-East Asia" = "solid", 
+          "Western Pacific" = "dashed", 
+          "Eastern Mediterranean" = "dotted")
+) + 
+            
+labs(y = "Cumulative infant lives saved", x = "") + 
+coord_cartesian(xlim = c(1974,2028),
+                clip = "off") + 
+theme_us_classic() + 
+theme(legend.position = "top",
+      legend.title =element_blank(),
+      legend.justification = "left",
+      legend.key = element_blank())
+
+
+```
+
+In Figure \@ref(fig:line-cont2), some adjustments were made with respect to the previous Figure \@ref(fig:line-cont1). The representation of multiple lines simultaneously, known as a spaghetti graph, makes it difficult to focus attention on a single line, especially if each uses different colors or styles, as was the case in Figure \@ref(fig:line-cont1). One of the strategies to avoid this problem would be to emphasize some specific lines. For example, show the regions that benefited the most from childhood vaccines since 1974 (see the Figure  \@ref(fig:line-cont2)). In addition to emphasizing the lines, regions were labeled next to the data series and colored with the same color as the data they describe. 
+
+
+(ref:line-cont2)  Cumulative number of lives saved from childhood vaccines since 1974. The use of continuous lines, the highlighting of certain lines, direct labeling in the legend and the strategic use of color solve the drawbacks presented in Figure \@ref(fig:line-cont1).  
+
+```{r line-cont2, fig.width = 5.5*6/4.2, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:line-cont2)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   scales,
+   ggtext
+  )
+
+data <- read.csv(
+"data/Chapter10/cumulative_lives_vaccination.csv"
+                 )
+
+data <- data %>% 
+        select(-Code) %>%
+        rename(
+         cumulative = cumulative_deaths_averted_vaccination
+        )
+
+data_label <- tribble(~label, ~year, ~cumulative, ~entity,
+                      "Africa",2024, 52940403, "Africa",
+                      "Americas",2024, 17146250, "Americas",
+                       "Eastern\nMediterranean", 2024,25084216, "Eastern Mediterranean",
+                      "Europe", 2024, 7282214, "Europe",
+                      "South-East\nAsia", 2024, 38040902, "South-East Asia",
+                      "Western\nPacific",2024,13531872, "Western Pacific") 
+
+ggplot(data, aes(
+  x = Year, y =cumulative 
+)) + 
+stat_summary(aes(group =Entity,
+              color = Entity), 
+             geom = "line", 
+             fun = mean, size = 0.8) +
+scale_x_continuous(breaks = c(1974,1982,1990,
+                              1998,2006, 2014,2024),
+                   labels = c("1974", "1982","1990",
+                              "1998","2006","2014",
+                              "2023-2024")) +
+scale_y_continuous(expand = c(0,0),
+                   limits = c(0,60000000),
+                   breaks = c(
+                     0,20000000, 40000000 ,
+                     60000000
+                   ), 
+                   labels = c(
+                     "0", "20M",
+                     "40M", "60M")
+                   ) + 
+scale_color_manual(values = c(
+                      "Africa" = "#0072B2", 
+                      "Americas" = "gray50",
+                       "Eastern Mediterranean" = "gray50",
+                      "Europe" = "gray50",
+                      "South-East Asia" = "#0072B2",
+                      "Western Pacific" = "gray50")) + 
+geom_text(data = data_label,
+          mapping = aes(x = year, 
+                  y = cumulative,
+                  color = entity,
+                  label = label),
+          show.legend = FALSE, size = 14, 
+          size.unit = "pt",hjust = 0, lineheight = 0.8) + 
+labs(y = "Cumulative infant lives saved", x = "") + 
+coord_cartesian(xlim = c(1974,2030),
+                clip = "off") + 
+theme_us_classic() + 
+theme(legend.position = "none",
+      legend.key = element_blank())
+
+```
+
+Another strategy to avoid clumped line plots is to use small panels or facets that allow the lines to be separated, thus facilitating a more detailed analysis of the trend in each region. It is important to ensure that all facets share the same vertical axis, which helps to avoid misleading interpretations (Figure \@ref(fig:line-cont3)).
+
+(ref:line-cont3) Cumulative number of lives saved from childhood vaccines since 1974. Another good option to avoid agglomerated lines is to separate each line into small panels or festoons. 
+
+```{r line-cont3, fig.width = 5.5*6/3.2, fig.asp = 0.8,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:line-cont3)',fig.align='center'}
+
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   scales,
+   ggtext,
+   grid
+  )
+
+data <- read.csv(
+"data/Chapter10/cumulative_lives_vaccination.csv"
+)
+
+data <- data %>% 
+        select(-Code) %>%
+        rename(
+         cumulative = cumulative_deaths_averted_vaccination
+        )
+
+
+ggplot(data, aes(
+  x = Year, y =cumulative 
+)) + 
+stat_summary(aes(group =Entity), 
+             color = "#0072B2",
+             geom = "line", 
+             fun = mean, size = 0.8) +
+scale_x_continuous(breaks = c(1974,1982,1990,
+                              1998,2006, 2014,2024),
+                   labels = c("1974", "1982","1990",
+                              "1998","2006","2014",
+                              "2023-2024")) +
+scale_y_continuous(expand = c(0,0),
+                   limits = c(0,60000000),
+                   breaks = c(
+                     0,20000000, 40000000 ,
+                     60000000
+                   ), 
+                   labels = c(
+                     "0", "20M",
+                     "40M", "60M")
+                   ) + 
+facet_wrap(~Entity, scales = "free",             
+          ncol = 2) + 
+labs(y = "Cumulative infant lives saved", x = "") + 
+coord_cartesian(xlim = c(1974,2028),
+                clip = "off") + 
+theme_us_classic() + 
+theme(legend.position = "none",
+      legend.key = element_blank(),
+      strip.text = element_text(size = 13,
+      hjust = 0, margin = margin(7, 7, 3, 7)),
+      strip.background  = element_rect(
+        fill = "grey85", colour = "grey85",
+        linetype = 1, size = 0.25),
+      panel.spacing.x = grid::unit(14, "pt"),
+      plot.margin = margin(3.5, 1.5, 3.5, 1.5))
+
+```
+
+
+Another action observed in publications are bar charts with fill patterns. The use of fill patterns generates visual distraction, they look like ties with stripes or dots. In addition, if different types of patterns (lines or dots) are used, they will make it difficult for the reader to focus on a single piece of data (bar), as they will compete for their attention. Solid, colored shapes are still the most effective choice for displaying data. A valid justification for not using them could be the cost of color ink, since black and white publications are more economical. However, there is still an alternative: use shades such as black, dark gray, light gray and white. The choice is up to you!
+
+(ref:pattern1) Influence of heat treatment (80°C, 20 min) on the reduction of culturable dormant *B. subtilis* spores. The line patterns in the bars generate more visual load. Error bars present standard deviations of independent experiments (n ≥ 3). The dashed line shows the detection limit. Note: To generate this graph we used the code published by Riffomonas Professional Development [@Schloss2023]. 
+
+
+```{r pattern1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:pattern1)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggpattern,
+   ggtext,
+   grid
+  )
+
+spore_data <- tibble(
+  fraction_alive = abs(c(
+    rnorm(6, 1e-1, 7e-2),
+    rnorm(3, 1e-4, 7e-5), 
+    rnorm(3, 1e-3, 7e-4),
+    rnorm(6, 1e-6, 7e-7),
+    rnorm(6, 1e-8, 7e-9)
+  )),
+  heat = rep(rep(c("before heat", "after heat"), 
+          each = 3), 4),
+  treatment = rep(c("A", "B", "C", "D"), each = 6)
+)
+
+mean_sd <- function(x){
+  tibble(y = mean(x),
+         ymin = y - sd(x),
+         ymax = y + sd(x))}
+
+spore_data %>% 
+  mutate(log_fraction_alive = log10(fraction_alive),
+         heat = factor(heat, 
+         levels = c("before heat", "after heat"))) %>%
+  ggplot(aes(x = treatment, fill = heat, 
+             y = log_fraction_alive)) +
+   stat_summary(geom = "col_pattern",
+                mapping = aes(pattern = heat), 
+                fun.data = mean_sd,
+                position = position_dodge(),
+                color = "black", linewidth = 0.5,
+                pattern = 'stripe',
+                pattern_angle = 45,
+                pattern_density = 0.01,
+                pattern_spacing = 0.02,
+                pattern_color = "black",
+                pattern_fill = NA,
+                pattern_key_scale_factor = 5
+                ) +
+  stat_summary(geom = "errorbar", fun.data = mean_sd,
+               position = position_dodge(width = 0.9), 
+               width = 0.3) +
+  geom_hline(yintercept = c(0, -8), linewidth = c(0.5, 1),
+             linetype = c("solid", "dashed")) +
+  scale_fill_manual(name = NULL,
+                     breaks = c("before heat", "after heat"),
+                    values = c("#013062","#D9ECF5")) +
+  scale_pattern_discrete(name = NULL,
+                    breaks = c("before heat", 
+                               "after heat"),
+                    choices = c("none", 
+                                "stripe")) +
+  scale_x_discrete(name = NULL,
+                   breaks = c("A", "B", "C", "D"),
+                   labels = c("Val\nNis\nNoHP",
+                            "Val\nNis\nmHP",
+                            "Val\nNis\nvHP",
+                            "TSB\nNis\nvHP\n80\u00B0C\n37\u00B0C\nvHP")) +
+  scale_y_continuous(name = "log<sub>10</sub> (N/N<sub>0</sub>) [-]",
+                     limits = c(-10, 0.5),
+                     breaks = seq(0, -10, -1),
+                     expand = c(0, 0)) +
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    legend.justification = "left",
+    legend.text = element_text(face = "italic", size = 13),
+    legend.background = element_rect(color = "black"),
+    legend.margin = margin(2, 2, 2, 2),
+    legend.key.height = unit(15, "pt"),
+    legend.key.width = unit(30, "pt"),
+    legend.key = element_rect(color = "black", linewidth = 0.5),
+    legend.box.spacing = unit(-40, "pt"),
+    legend.box.margin = margin(l = 50),
+    axis.text.x = element_text(size = 14, color = "black",
+                               margin = margin(t = 8)),
+    axis.text.y = element_text(size = 13, color = "black"),
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_markdown(size = 14),
+    axis.ticks.length.x = unit(-5, "pt"),
+    plot.margin = margin(t = 5, r = 0, b = 8, l = 20))
+
+```
+
+
+The reason for avoiding the use of color ink was understandable, but I have observed publications that, despite including color graphs, also incorporate line or dot patterns, which increases the visual load. Below is a bar chart with a line pattern, recreated from the original figure, since in the original publication only one bar contained such a pattern [@Rosa2024]. However, these patterns are still present. The graph shows the influence of heat treatment (80°C, 20 min) on the reduction of latent culturable spores of *B. subtilis* (Figure \@ref(fig:pattern1)). 
+In Figure \@ref(fig:pattern1) there are certain things to analyze. We have colored backslashes and also have black line patterns and the legend is below the figure with italicized labels and a box around it. In addition, there is a thick black dashed line indicating the detection limit at -8.
+
+(ref:pattern2) Influence of heat treatment (80°C, 20 min) on the reduction of culturable dormant *B. subtilis* spores. Some improvements were made to Figure \@ref(fig:pattern1). The line patterns were removed, the legend in the upper left justified part was moved to the left, and the thickness and color of the dashed line were modified.  Error bars present standard deviations of independent experiments ($n \\ge 3$). 
+
+```{r pattern2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:pattern2)',fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggtext,
+   grid
+  )
+
+spore_data <- tibble(
+  fraction_alive = abs(c(
+    rnorm(6, 1e-1, 7e-2),
+    rnorm(3, 1e-4, 7e-5), 
+    rnorm(3, 1e-3, 7e-4),
+    rnorm(6, 1e-6, 7e-7),
+    rnorm(6, 1e-8, 7e-9)
+  )),
+  heat = rep(rep(c("before heat", "after heat"), 
+          each = 3), 4),
+  treatment = rep(c("A", "B", "C", "D"), each = 6)
+)
+
+mean_sd <- function(x){
+  tibble(y = mean(x),
+         ymin = y - sd(x),
+         ymax = y + sd(x))}
+
+spore_data %>% 
+  mutate(log_fraction_alive = log10(fraction_alive),
+         heat = factor(heat, 
+         levels = c("before heat", "after heat"))) %>%
+  ggplot(aes(x = treatment, fill = heat, 
+             y = log_fraction_alive)) +
+  geom_hline(yintercept = -8, linewidth = 0.6,
+             linetype = "dashed", color = "gray50") + 
+  stat_summary(geom = "col", color = "black",
+               fun.data = mean_sd, 
+               position = position_dodge()) + 
+  stat_summary(geom = "errorbar", fun.data = mean_sd,
+               position = position_dodge(width = 0.9), 
+               width = 0.2, color = "black") +
+  geom_hline(yintercept = 0,linewidth = 0.6,
+             linetype = "solid", color = "black") + 
+  annotate("text", x = 1, y = -7.5 , label = "Detection limit",
+           color = "gray50",  size = 14/.pt) + 
+  scale_fill_manual(name = NULL,
+                     breaks = c("before heat", "after heat"),
+                    values = c("#013062","#D9ECF5")) +
+  scale_x_discrete(name = NULL,
+                   breaks = c("A", "B", "C", "D"),
+                   labels = c("Val\nNis\nNoHP",
+                            "Val\nNis\nmHP",
+                            "Val\nNis\nvHP",
+                            "TSB\nNis\nvHP\n80\u00B0C\n37\u00B0C\nvHP")) +
+  scale_y_continuous(name = "log<sub>10</sub> (N/N<sub>0</sub>) [-]",
+                     limits = c(-10, 0.5),
+                     breaks = seq(0, -10, -1),
+                     expand = c(0, 0)) +
+  theme_us_classic() +
+  theme(
+    legend.position = "top",
+    legend.justification = "left",
+    legend.key = element_blank(),
+    axis.text.x = element_text(size = 14, color = "black",
+                               margin = margin(t = 8)),
+    axis.text.y = element_text(size = 13, color = "black"),
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_markdown(size = 14),
+    axis.ticks.length.x = unit(-5, "pt"),
+    plot.margin = margin(t = 2, r = 15, 
+        b = 8, l = 10))
+
+```
+
+Figure \@ref(fig:pattern2) shows some modifications with respect to the previous figure. The line patterns were eliminated, as I consider them unnecessary, given that the colors used are sufficient. In addition, the legend was relocated to the top of the graph and the italic style of the labels was removed to improve legibility. As mentioned above, dashed lines are useful for representing secondary data, so they should not compete visually with the colored bars showing the main data. An alternative would be to reduce their thickness and use a gray tone. 
+
+## Be careful with 3D graphics
+
+There is a great variety of graphs and their creation is intended to make it easier for the reader to interpret the data of a study, but not to confuse him. But there are some graphs that deviate from this objective, and rather have an aesthetic purpose. We are talking about three-dimensional (3D) graphics.
+
+(ref:3D) Example of 3D graphs. These graphs are considered attractive, but may cause occlusion and distortion of the data. (A) Pie chart showing the proportion of female possums at sites in southern Victoria (Vic) and others (New Wales or Queensland). (B) Number of possums (females and males) captured in southern Victoria and other sites, shown as a clustered bar chart. Graphs created with Microsoft Excel.
+
+```{r 3D, echo = FALSE, fig.cap= '(ref:3D)', fig.align='center', out.width='80%'}
+library(knitr)
+knitr::include_graphics(rep("images/figure_3D.png"))
+```
+
+3D graphics are considered inappropriate graphics because they introduce unnecessary elements that make it difficult to interpret or compare data. Even so, in specific contexts and with controlled use, 3D graphics could have some communicative value (Figure \@ref(fig:hemoglobin)). This last point will be discussed later.
+
+The types of graphs that are most frequently transformed into three-dimensional representations are pie charts, bar charts, and clustered bar charts. Figure 1 presents examples of three-dimensional plots (pie and clustered bar) used in a study of morphometric measurements [@Lindenmayer] in mountain brushtail possums (*Trichosurus caninus*). We will then examine the graphs and identify errors.
+
+- The 3D tilted pie chart distorts the angles between the portions (Figure \@ref(fig:3D) A). These distortions cause the front portions to appear larger than they are and the back portions to appear smaller. In this example, the 44% (Other) portion appears to be equal to or slightly larger than the 56% (southern Victoria) portion. 
+
+- The grouped bar graph (Figure \@ref(fig:3D) B) suggests that females captured in Victoria number less than 20. However, the actual data indicate that 22 individuals were recorded. This optical illusion arises because the bars are in three dimensions with some angular perspective, causing difficulty in judging the top of the bars with the naked eye.
+
+(ref:hemoglobin) Quaternary structure of human deoxyhemoglobin. (A) It is composed of two polypeptide subunits alpha  and beta and contains four heme groups. (B) Schematic representation of the heme group with its iron atom in the ferrous state (Fe^2+). Surrounding it is the proximal histidine which binds directly to Fe^2+. The heme group is colored green; iron, red; histidine (His), orange. Data source: [Kanza et al (2022);PDB ID: 2HHB].
+
+```{r hemoglobin, echo = FALSE, fig.cap= '(ref:hemoglobin)', fig.align='center', out.width='80%'}
+library(knitr)
+knitr::include_graphics(rep("images/hemoglobin.png"))
+```
+
+The above are the main limitations of these types of graphics. However, one justification for three-dimensional use is to graphically represent three-dimensional data, with their x, y, and z values.  Examples of such data are molecular surfaces (Figure \@ref(fig:hemoglobin)), architectural structures, and population density maps [@Szafir;@claus5;@Svalina]. Although these graphics show real three-dimensional objects, in printed publications it is only possible to partially observe the depicted volume [@Szafir]. However, when using interactive visualization, it is possible to overcome these limitations, as the user can explore the object from different angles. Another alternative would be to combine three-dimensional representations with 2D summary graphics [@Szafir;@Svalina].
+
+## Graphs with two vertical axes
+
+Charts with two axes of double scale are seen in certain publications, and their use is based on comparing values with different units of measurement. You save space, but the price is high, because adding a second axis and the reader is challenged to identify which data belongs to which axis. 
+
+(ref:axes) Example of a climate diagram. (A) Chart with a secondary Y-axis. (B) Vertically separated charts, with X-axis in common, but each with its own Y-axis. 
+
+```{r axes, out.width='90%',dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:axes)',fig.align='center'}
+
+knitr::include_graphics(rep("images/two_axes.png"))
+
+```
+
+
+In Figure \@ref(fig:axes) A we have a climate diagram shown in the form of lines with two Y-axes showing the comparison of mean annual temperature with total precipitation over a time interval (1892-1940). At least in this graph the line with its axis has been color-coded. However, a problem appears and that is the appearance of crossing of the lines. This observation is important to mention, since the intersection indicates that one set of values exceeded the other, but in this situation this is not the case, the interaction does not mean anything due to the different quantitative scales used.
+
+Then, a better alternative is to separate the graphs and place them vertically, close to each other, and each with its own left Y-axis (Figure \@ref(fig:axes) B). Other options would be to directly label the data on the secondary (right) Y-axis or to convert all sets of values to a common quantitative scale showing the percentage differences between each value and a reference value [@stephen10].
+
+## In conclusion
+
+In this chapter we have explored different considerations and solutions to address problems about the use of contour plots and the use of different fill patterns. Contour plots are common in some charts such as bar charts, box plots, scatter plots, line plots and density plots. Contour plots are often visually distracting, compared to solid colored shapes that are easily perceived. Another frequently observed problem is the use of different styles of dashed lines to represent major data or trends. They are best used to show secondary data such as averages, projections, or to indicate something that is a primary focus. 
+
+Also, discussed were graphics with fill patterns, which in my opinion are more distracting than contour graphics. Finally, the disadvantages of using 3D plots and plots with two secondary Y axes were shown.
+
+## To practice!
+
+### Exercise 1
+
+Below is a line graph recreated from the original figure published in an article on the U.S. vaccination rate and its decline since the COVID-19 pandemic [@paris20]. Look at Figure \@ref(fig:ex-1) and reflect on possible improvements to the graph - put what you have learned into practice!
+
+(ref:ex-1) Share of U.S. kindergartners vaccinated against measles, polio and whooping cough. Some modifications were made to the code published by Riffomonas Professional Development [@Schloss2023].
+
+```{r ex-1, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:ex-1)', fig.align='center'}
+
+library(pacman)
+pacman::p_load(
+   tidyverse
+  )
+
+
+cdc_data <- read.csv(file = 
+              "data/Chapter10/Vaccination_Kindergartners.csv", 
+              header = TRUE,  sep=",")
+
+vaccines <- c("DTP, DTaP, or DT", "MMR", "Polio")
+
+cdc_data <- cdc_data %>%
+  filter(Geography == "United States") %>%
+  select(vaccine = "Vaccine.Exemption",
+         school_year = "School.Year",
+         estimate = "Estimate....") %>%
+  filter(vaccine %in% vaccines & 
+           school_year != "2009-10" & school_year != "2010-11") %>%
+  mutate(estimate = as.numeric(estimate),
+         year = as.numeric(str_replace(school_year, "-..", "")))
+
+cdc_data <- cdc_data  %>% 
+                 mutate(vaccine = recode(vaccine,
+                  "DTP, DTaP, or DT" = "Whooping cough")) 
+
+cdc_data <- cdc_data  %>% 
+                 mutate(vaccine = recode(vaccine,
+                  "MMR" = "Measles")) 
+
+
+cdc_data %>%
+  ggplot(aes(x = year, y = estimate,
+             color = vaccine, fill = vaccine)) +
+    geom_hline(yintercept = 95, color = "black", 
+             size = 1) + 
+  geom_line(aes(linetype =vaccine ), linewidth = 1,
+            size = 2) +
+  annotate(geom = "text", hjust = 1, vjust = -0.3,
+           x = 2023.25, y = 95, 
+           label = "FEDERAL\nMEASLES TARGET",
+           lineheight = 0.8) +
+  scale_y_continuous(limits = c(90.9, 95.5),
+                     breaks = 91:95,
+                     labels = c(91:94, "95%")) +
+  scale_x_continuous(breaks = c(2011, 2015, 2019, 2023),
+                     labels = c("2011-12", "2015-16", "2019-20", "2023-24")) +
+  scale_color_manual(values = c("#B5C1A8","#A86B5E", "#F1C40F")) +
+  scale_fill_manual(values = c("#B5C1A8","#A86B5E", "#F1C40F")) +
+  scale_linetype_manual(values = c(
+                     "Measles" = "solid", 
+                     "Polio" = "dotted", 
+                     "Whooping cough" = "dashed"
+  )) + 
+  coord_cartesian(xlim = c(2009.5, 2023.25),
+                  expand = FALSE, clip = "off") +
+  labs(x = "School year",
+       y = NULL) + 
+  theme_us_classic() + 
+   theme(plot.margin = margin(t = 8, r = 70, b = 3, l = 8),
+         legend.key = element_blank(),
+         legend.title = element_blank(),
+         legend.position = "top",
+         legend.justification = "left")
+```
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+pacman::p_load(
+   tidyverse
+  )
+
+
+cdc_data <- read.csv(file = 
+              "data/Chapter10/Vaccination_Kindergartners.csv", 
+              header = TRUE,  sep=",")
+
+vaccines <- c("DTP, DTaP, or DT", "MMR", "Polio")
+
+cdc_data <- cdc_data %>%
+  filter(Geography == "United States") %>%
+  select(vaccine = "Vaccine.Exemption",
+         school_year = "School.Year",
+         estimate = "Estimate....") %>%
+  filter(vaccine %in% vaccines & 
+           school_year != "2009-10" & school_year != "2010-11") %>%
+  mutate(estimate = as.numeric(estimate),
+         year = as.numeric(str_replace(school_year, "-..", "")))
+
+cdc_data <- cdc_data  %>% 
+                 mutate(vaccine = recode(vaccine,
+                  "DTP, DTaP, or DT" = "Whooping cough")) 
+
+cdc_data <- cdc_data  %>% 
+                 mutate(vaccine = recode(vaccine,
+                  "MMR" = "Measles")) 
+
+
+```
+
+
+### Exercise 2
+
+We present a contoured bar graph representing lung cancer mortality rates in the US since 1950 [@who20]. Look at Figure \@ref(fig:ex-2) and evaluate possible improvements to the graph. Is it appropriate to use a bar graph in this case? Or would it be more convenient to directly label the legend on the graph?
+
+
+(ref:ex-2) Lung cancer death rates, United States. Contoured and colored bar graphs according to gender. 
+
+```{r ex-2, out.width = "0.9\\linewidth", fig.width = 6, fig.asp = 0.6,dpi=300,echo=FALSE,error=FALSE, warning=FALSE, message=FALSE, fig.cap= '(ref:ex-2)', fig.align='center'}
+
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggtext
+  )
+
+lung_data <- read.csv(file = 
+            "data/Chapter10/lung_cancer_deaths.csv", 
+            header = TRUE,  sep=",")
+
+lung_data <- lung_data %>% 
+  filter(Entity == "United States")  %>%
+rename(
+female =  Age.standardized.deaths.from.trachea..bronchus..lung.cancers.in.females.in.those.aged.all.ages.per.100.000.people
+      ) %>%
+rename (
+male  = Age.standardized.deaths.from.trachea..bronchus..lung.cancers.in.males.in.those.aged.all.ages.per.100.000.people  
+        )
+
+lung_data <- lung_data %>% 
+              pivot_longer(
+                cols = c("female", "male"),
+                names_to = "gender", values_to = "value"
+              )
+
+ggplot(lung_data, 
+       aes(x = Year, y = value,
+           color = gender)) + 
+geom_col(position = position_dodge(1),
+         fill = "white") + 
+scale_y_continuous(limits = c(0,70),
+                   breaks = seq(0,70,10),
+                   expand = c(0,0)) + 
+scale_x_continuous(
+                   breaks = c(
+                   1950,1960,1970,1980,1990,2000,
+                   2010,2021
+                   ),
+                   labels = c(
+                   "1950","1960","1970","1980","1990","2000",
+                   "2010","2020-2021"  
+                   )) + 
+scale_color_manual(values = c(
+     "male" = "#0072B2",
+      "female" = "#D55E00"
+)) + 
+labs(x = "", y = "",
+     title = "Lung cancer death rates, United States",
+     subtitle = "Reported annual death rate from lung, 
+        bronchus or trachea cancers per 100,000 people, 
+        based on the underlying cause listed on death certificates.",
+     caption = "Data source: WHO Mortality Database (2024)"
+     ) + 
+coord_cartesian(xlim = c(1950, 2021.8),
+                clip = "off") + 
+theme_us_classic() + 
+  theme(plot.title.position = "plot",
+        plot.title = element_text(size = 16),
+        legend.title = element_blank(),
+         plot.subtitle = element_textbox_simple(
+           size = 12, lineheight = 1,
+          margin = margin(t = 2)),
+         legend.position = "top",
+        legend.justification = "left",
+        plot.caption.position = "plot" ,
+        plot.caption = element_text(size = 10,
+                            color = "gray40",
+                            hjust = 0))
+
+
+```
+
+
+```{r, warning=FALSE, message=FALSE, error=FALSE,eval=FALSE}
+
+library(pacman)
+pacman::p_load(
+   tidyverse,
+   ggtext
+  )
+
+lung_data <- read.csv(file = 
+            "data/Chapter10/lung_cancer_deaths.csv", 
+            header = TRUE,  sep=",")
+
+lung_data <- lung_data %>% 
+             filter(Entity == "United States")  %>%
+              rename(
+              female =  Age.standardized.deaths.from.trachea..bronchus..lung.cancers.in.females.in.those.aged.all.ages.per.100.000.people
+              ) %>%
+              rename (
+              male  = Age.standardized.deaths.from.trachea..bronchus..lung.cancers.in.males.in.those.aged.all.ages.per.100.000.people  
+              )
+
+lung_data <- lung_data %>% 
+              pivot_longer(
+                cols = c("female", "male"),
+                names_to = "gender", values_to = "value"
+              )
+
+
+```
+
+

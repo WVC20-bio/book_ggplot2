@@ -1,0 +1,56 @@
+---
+title: "Chapter7"
+author: "William Vilchez Cruz"
+date: '2025-02-12'
+output: html_document
+---
+
+
+## Exercise 2
+
+```{r}
+
+library(pacman)
+
+pacman::p_load(
+        tidyverse,
+        sf
+        )
+
+cancer01 <- read.csv(
+         file = "data/Chapter07/USCSlung.csv",
+         header = TRUE
+         )
+
+cancer02 <-  cancer01 %>% 
+  rename(name = Area) %>%
+  mutate(
+  `Age adjusted rate\n(per 100,000)` = AgeAdjustedRate)
+
+load("data/Chapter07/US_income_cartogram.rda")
+
+cancer02 <- left_join(US_income_cartogram, 
+            cancer02, by = c("name"))
+cancer02 <- st_transform(cancer02, 3857)
+
+  ggplot() + 
+  geom_sf(data = cancer02,
+  aes(
+  fill = `Age adjusted rate\n(per 100,000)`), 
+  colour = "gray20") +
+  scale_fill_distiller(type = "seq", palette = "RdPu",  
+         direction = 1) +
+  theme_us +
+  theme(
+    legend.position = c(0, 1.02),
+    legend.justification = c(0.5, 1.1),
+    plot.margin = margin(2, 2, 2, 1.5),
+    legend.background = element_rect(
+    fill = "transparent", colour = NA),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank()
+  )
+
+```
+

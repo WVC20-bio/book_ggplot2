@@ -1,9 +1,3 @@
-`r if (knitr:::is_html_output()) '# References {-}'`
-
-```{r include=FALSE}
-# generate a BibTeX database automatically for some R packages
-knitr::write_bib(c(
-  .packages(), 'bookdown', 'knitr', 'rmarkdown'
-), 'packages.bib')
-```
-
+version https://git-lfs.github.com/spec/v1
+oid sha256:abee3ea881b9ce7a203cffed4456e8200cc4c2f879ce279f6169150eb16a074e
+size 230

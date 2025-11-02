@@ -4,3 +4,6 @@
 *.xlsx filter=lfs diff=lfs merge=lfs -text
 *.Rmd filter=lfs diff=lfs merge=lfs -text
 *jpg filter=lfs diff=lfs merge=lfs -text
+data/* filter=lfs diff=lfs merge=lfs -text
+data/Chapter06/microbiome_otu filter=lfs diff=lfs merge=lfs -text
+data/Chapter07/mohawk_mooring_mko_20240801.csv filter=lfs diff=lfs merge=lfs -text
